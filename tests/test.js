@@ -48,16 +48,16 @@ function makeRequest (protocol, host, port, path) {
 function checkRequest (result) {
   const timings = result.timings
   const tcpConnection = timings.tcpConnection
-  const responseBegin = timings.responseBegin
+  const firstByte = timings.firstByte
   assert.equal(typeof result, 'object')
   assert.equal(Object.keys(result).length, 2)
   assert.equal(typeof result.timings, 'object')
   checkTiming(timings.socketOpen)
   checkTiming(tcpConnection)
-  checkTiming(responseBegin)
-  checkTiming(timings.responseEnd)
-  checkNull(timings.socketClose)
-  assert.ok(getDuration(tcpConnection, responseBegin) >= 100 * 1e6)
+  checkTiming(firstByte)
+  checkTiming(timings.contentTransfer)
+  checkTiming(timings.socketClose)
+  assert.ok(getDuration(tcpConnection, firstByte) >= 100 * 1e6)
   return result
 }
 
@@ -85,7 +85,7 @@ function testHostname () {
     .then(result => {
       const timings = result.timings
       assert.equal(result.statusCode, 204)
-      assert.equal(Object.keys(timings).length, 5)
+      assert.equal(Object.keys(timings).length, 6)
       checkTiming(timings.dnsLookup)
     })
 }
@@ -96,7 +96,7 @@ function testIPAddress () {
       const timings = result.timings
       assert.equal(result.statusCode, 204)
       assert.equal(Object.keys(timings).length, 5)
-      checkTiming(timings.dnsLookup)
+      checkNull(timings.dnsLookup)
     })
 }
 
@@ -106,7 +106,7 @@ function testMissingPage () {
       const timings = result.timings
       assert.equal(result.statusCode, 404)
       assert.equal(Object.keys(timings).length, 5)
-      checkTiming(timings.dnsLookup)
+      checkNull(timings.dnsLookup)
     })
 }
 
@@ -124,7 +124,7 @@ function testInvalidURL () {
     .then(assert.fail)
     .catch(error => {
       assert.ok(error instanceof Error)
-      assert.equal(error.message, 'Invalid protocol: dummy:')
+      assert.ok(error.message.indexOf('dummy:') > 0)
     })
 }
 

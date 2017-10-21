@@ -2,7 +2,7 @@
 
 [![NPM Downloads](https://nodei.co/npm/nettime.png?downloads=true&stars=true)](https://www.npmjs.com/package/nettime)
 
-Prints timings of a HTTP/S request, including DNS lookup, TLS handshake etc.
+Prints time duration of various stages of a HTTP/S request, like DNS lookup, TLS handshake, Time to First Byte etc. You can find more information in [Understanding & Measuring HTTP Timings with Node.js](https://blog.risingstack.com/measuring-http-timings-node-js/).
 
 ## Command-line usage
 
@@ -40,8 +40,8 @@ const nettime = require('nettime')
 nettime('http://www.google.com').then(result => {
   if (result.statusCode === 200) {
     let timings = result.timings
-    let duration = nettime.getDuration(timings.responseBegin,
-          timings.responseEnd)
+    let duration = nettime.getDuration(timings.firstByte,
+          timings.contentTransfer)
     console.log(nettime.getMilliseconds(duration) + 'ms')
   }
 })
@@ -64,6 +64,7 @@ your code using Grunt.
 
 ## Release History
 
+* 2017-10-22   v0.2.0   Add timing for Socket Close
 * 2017-10-21   v0.1.0   Initial release
 
 ## License
