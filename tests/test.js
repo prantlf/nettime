@@ -1,11 +1,17 @@
 'use strict'
 
 const assert = require('assert')
+const fs = require('fs')
 const http = require('http')
+const https = require('https')
 const nettime = require('..')
+const path = require('path')
 
+const key = readCertificate('key')
+const certificate = readCertificate('cert')
 const ipAddress = '127.0.0.1'
-const port = 8899
+const unsecurePort = 8899
+const securePort = 9988
 const servers = []
 
 function createServer (protocol, port, options) {
@@ -20,6 +26,10 @@ function createServer (protocol, port, options) {
   })
 }
 
+function readCertificate (name) {
+  return fs.readFileSync(path.join(__dirname, name + '.pem'))
+}
+
 function serve (request, response) {
   setTimeout(() => {
     response.writeHead(request.url === '/' ? 204 : 404)
@@ -28,7 +38,11 @@ function serve (request, response) {
 }
 
 function startServers () {
-  return createServer(http, port)
+  return createServer(http, unsecurePort)
+    .then(createServer.bind(null, https, securePort, {
+      key: key,
+      cert: certificate
+    }))
 }
 
 function stopServers () {
@@ -40,7 +54,11 @@ function stopServers () {
 
 function makeRequest (protocol, host, port, path) {
   return nettime({
-    url: protocol + '://' + host + ':' + port + (path || '')
+    url: protocol + '://' + host + ':' + port + (path || ''),
+    agentOptions: protocol === 'https' ? {
+      key: key,
+      cert: certificate
+    } : undefined
   })
   .then(checkRequest)
 }
@@ -81,32 +99,46 @@ function checkNull (timing) {
 }
 
 function testHostname () {
-  return makeRequest('http', 'localhost', port)
+  return makeRequest('http', 'localhost', unsecurePort)
     .then(result => {
       const timings = result.timings
       assert.equal(result.statusCode, 204)
       assert.equal(Object.keys(timings).length, 6)
       checkTiming(timings.dnsLookup)
+      checkNull(timings.tlsHandshake)
     })
 }
 
 function testIPAddress () {
-  return makeRequest('http', ipAddress, port)
+  return makeRequest('http', ipAddress, unsecurePort)
     .then(result => {
       const timings = result.timings
       assert.equal(result.statusCode, 204)
       assert.equal(Object.keys(timings).length, 5)
       checkNull(timings.dnsLookup)
+      checkNull(timings.tlsHandshake)
+    })
+}
+
+function testSecurity () {
+  return makeRequest('https', ipAddress, securePort)
+    .then(result => {
+      const timings = result.timings
+      assert.equal(result.statusCode, 204)
+      assert.equal(Object.keys(timings).length, 6)
+      checkNull(timings.dnsLookup)
+      checkTiming(timings.tlsHandshake)
     })
 }
 
 function testMissingPage () {
-  return makeRequest('http', ipAddress, port, '/missing')
+  return makeRequest('http', ipAddress, unsecurePort, '/missing')
     .then(result => {
       const timings = result.timings
       assert.equal(result.statusCode, 404)
       assert.equal(Object.keys(timings).length, 5)
       checkNull(timings.dnsLookup)
+      checkNull(timings.tlsHandshake)
     })
 }
 
@@ -140,8 +172,10 @@ function testMilliseconds () {
 }
 
 assert.equal(typeof nettime, 'function')
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 startServers().then(testHostname)
               .then(testIPAddress)
+              .then(testSecurity)
               .then(testMissingPage)
               .then(testUnreachableHost)
               .then(testInvalidURL)
