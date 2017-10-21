@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+
+'use strict'
+
+const commander = require('commander')
+const nettime = require('..')
+const pkg = require('../package.json')
+const print = require('../lib/printer')
+
+commander.version(pkg.version)
+         .description(pkg.description)
+         .usage('[options] <URL>')
+         .option('-f, --format <format>', 'set output format: text, json')
+         .option('-u, --unit <unit>', 'set time unit: ms, s+ns')
+
+commander.on('--help', function () {
+  console.log()
+  console.log('  The default output format is "text" and time unit "ms".')
+  console.log('  Timings are printed to the standard output.')
+  console.log()
+  console.log('  Examples:')
+  console.log()
+  console.log('    $ nettime https://www.google.com')
+  console.log('    $ nettime -f json https://www.github.com')
+})
+
+commander.parse(process.argv)
+const url = commander.args[0]
+if (!url) {
+  commander.help()
+}
+
+nettime(url)
+  .then(function (result) {
+    const unit = commander.unit
+    if (commander.format === 'json') {
+      if (unit !== 's+ns') {
+        convertToMilliseconds(result.timings)
+      }
+      console.log(result)
+    } else {
+      print(result.timings, unit)
+      console.log()
+      console.log('Status Code:', result.statusCode)
+    }
+  })
+  .catch(function (error) {
+    console.error(error.message)
+    process.exitCode = 1
+  })
+
+function convertToMilliseconds (timings) {
+  const getMilliseconds = nettime.getMilliseconds
+  for (let timing in timings) {
+    timings[timing] = getMilliseconds(timings[timing])
+  }
+}

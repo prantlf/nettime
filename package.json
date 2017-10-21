@@ -1,0 +1,52 @@
+{
+  "name": "nettime",
+  "description": "Prints timings of a HTTP/S request, including DNS lookup, TLS handshake etc.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/prantlf/nettime",
+  "author": {
+    "name": "Ferdinand Prantl",
+    "email": "prantlf@gmail.com",
+    "url": "http://prantl.tk"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prantlf/nettime.git"
+  },
+  "bugs": {
+    "url": "https://github.com/prantlf/nettime/issues"
+  },
+  "license": "MIT",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/prantlf/nettime/blob/master/LICENSE"
+    }
+  ],
+  "engines": {
+    "node": ">= 4"
+  },
+  "main": "./lib/nettime.js",
+  "bin": {
+    "nettime": "./bin/nettime"
+  },
+  "scripts": {
+    "lint": "standard bin/nettime lib/*.js tests/*.js",
+    "check": "node tests/test",
+    "test": "npm run lint && npm run check"
+  },
+  "dependencies": {
+    "commander": "^2.11.0",
+    "request": "^2.83.0",
+    "sprintf-js": "^1.1.1"
+  },
+  "devDependencies": {
+    "standard": "^10.0.3"
+  },
+  "keywords": [
+    "nettime",
+    "time",
+    "net",
+    "timings",
+    "request"
+  ]
+}
