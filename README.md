@@ -54,7 +54,7 @@ The input argument is a string with a URL to make the request with.
 The result object contains:
 
 * `statusCode`: [HTTP status code] of the response (integer)
-* `timings`: object with timing properties from various stages of the request. Timing is an array with two integers - seconds and nanoseconds passed since the request has been made.
+* `timings`: object with timing properties from various stages of the request. Timing is an array with two integers - seconds and nanoseconds passed since the request has been made, as returned by [process.hrtime].
 
 ## Contributing
 
@@ -76,3 +76,4 @@ Licensed under the MIT license.
 [NodeJS]: http://nodejs.org/
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [HTTP status code]: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+[process.hrtime]: https://nodejs.org/api/process.html#process_process_hrtime_time
