@@ -1,7 +1,7 @@
 {
   "name": "nettime",
   "description": "Prints timings of a HTTP/S request, including DNS lookup, TLS handshake etc.",
-  "version": "0.1.0",
+  "version": "0.0.0-development",
   "homepage": "https://github.com/prantlf/nettime",
   "author": {
     "name": "Ferdinand Prantl",
@@ -31,16 +31,21 @@
   },
   "scripts": {
     "lint": "standard bin/nettime lib/*.js tests/*.js",
-    "check": "node tests/test",
-    "test": "npm run lint && npm run check"
+    "check": "tap tests/*.js",
+    "test": "npm run lint && npm run check",
+    "cover": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "dependencies": {
     "commander": "^2.11.0",
-    "request": "^2.83.0",
     "sprintf-js": "^1.1.1"
   },
   "devDependencies": {
-    "standard": "^10.0.3"
+    "coveralls": "^3.0.0",
+    "eslint-config-standard": "^10.2.1",
+    "semantic-release": "^8.2.0",
+    "standard": "^10.0.3",
+    "tap": "^10.7.2"
   },
   "keywords": [
     "nettime",
