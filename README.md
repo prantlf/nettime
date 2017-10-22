@@ -10,7 +10,7 @@ Make sure that you have [NodeJS] >= 4 installed. Install the `nettime` package g
 
 ```bash
 $ npm install -g nettime
-$ nettime http://www.google.com
+$ nettime https://www.google.com
 ```
 
 ```text
@@ -18,10 +18,11 @@ Usage: nettime [options] <URL>
 
 Options:
 
-  -V, --version          output the version number
-  -f, --format <format>  set output format: text, json
-  -u, --unit <unit>      set time unit: ms, s+ns
-  -h, --help             output usage information
+  -V, --version             output the version number
+  -e, --ignore-certificate  ignore certificate errors
+  -f, --format <format>     set output format: text, json
+  -u, --unit <unit>         set time unit: ms, s+ns
+  -h, --help                output usage information
 
 The default output format is "text" and time unit "ms".
 Timings are printed to the standard output.
@@ -37,7 +38,7 @@ npm install --save nettime
 
 ```javascript
 const nettime = require('nettime')
-nettime('http://www.google.com').then(result => {
+nettime('https://www.google.com').then(result => {
   if (result.statusCode === 200) {
     let timings = result.timings
     let duration = nettime.getDuration(timings.firstByte,
@@ -49,11 +50,16 @@ nettime('http://www.google.com').then(result => {
 
 The main module exports a function which makes a HTTP/S request and returns a [Promise] to the result object.
 
-The input argument is a string with a URL to make the request with.
+The input argument is a string with a URL to make the request with, or an object with multiple properties.
+
+The input object can contain:
+
+* `url`: string with a URL to make the request with.
+* `rejectUnauthorized`: boolean to refuse finishing the HTTPS request, is set to `true` (the default), if validation of the web site certificate fails; setting it to `false` makes the request ignore certificate errors.
 
 The result object contains:
 
-* `statusCode`: [HTTP status code] of the response (integer)
+* `statusCode`: [HTTP status code] of the response (integer).
 * `timings`: object with timing properties from various stages of the request. Timing is an array with two integers - seconds and nanoseconds passed since the request has been made, as returned by [process.hrtime].
 
 ## Contributing

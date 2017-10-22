@@ -10,6 +10,7 @@ const print = require('../lib/printer')
 commander.version(pkg.version)
          .description(pkg.description)
          .usage('[options] <URL>')
+         .option('-e, --ignore-certificate', 'ignore certificate errors')
          .option('-f, --format <format>', 'set output format: text, json')
          .option('-u, --unit <unit>', 'set time unit: ms, s+ns')
 
@@ -30,7 +31,10 @@ if (!url) {
   commander.help()
 }
 
-nettime(url)
+nettime({
+  url: url,
+  rejectUnauthorized: !commander.ignoreCertificate
+})
   .then(function (result) {
     const unit = commander.unit
     if (commander.format === 'json') {

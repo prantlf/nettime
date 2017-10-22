@@ -53,13 +53,12 @@ function stopServers () {
 }
 
 function makeRequest (protocol, host, port, path) {
-  return nettime({
-    url: protocol + '://' + host + ':' + port + (path || ''),
-    agentOptions: protocol === 'https' ? {
-      key: key,
-      cert: certificate
-    } : undefined
-  })
+  const https = protocol === 'https'
+  const url = protocol + '://' + host + ':' + port + (path || '')
+  return nettime(https ? {
+    url: url,
+    rejectUnauthorized: false
+  } : url)
   .then(checkRequest)
 }
 
@@ -172,7 +171,6 @@ function testMilliseconds () {
 }
 
 assert.equal(typeof nettime, 'function')
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 startServers().then(testHostname)
               .then(testIPAddress)
               .then(testSecurity)
