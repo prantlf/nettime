@@ -2,7 +2,7 @@
 
 [![NPM Downloads](https://nodei.co/npm/nettime.png?downloads=true&stars=true)](https://www.npmjs.com/package/nettime)
 
-Prints time duration of various stages of a HTTP/S request, like DNS lookup, TLS handshake, Time to First Byte etc. You can find more information in [Understanding & Measuring HTTP Timings with Node.js](https://blog.risingstack.com/measuring-http-timings-node-js/).
+Prints time duration of various stages of a HTTP/S request, like DNS lookup, TLS handshake, Time to First Byte etc. Similarly to the [time] command, which measures process timings, the `nettime` command measures HTTP/S request timings.  You can find more information in [Understanding & Measuring HTTP Timings with Node.js](https://blog.risingstack.com/measuring-http-timings-node-js/).
 
 ## Command-line usage
 
@@ -11,7 +11,20 @@ Make sure that you have [NodeJS] >= 4 installed. Install the `nettime` package g
 ```bash
 $ npm install -g nettime
 $ nettime https://www.google.com
+Phase             Finished Duration
+-----------------------------------
+Socket Open         0.023s   0.023s
+DNS Lookup          0.024s   0.001s
+TCP Connection      0.053s   0.029s
+TLS Handshake       0.133s   0.079s
+First Byte          0.174s   0.041s
+Content Transfer    0.176s   0.002s
+Socket Close        0.177s   0.001s
+
+Status Code: 302
 ```
+
+Running `nettime` without any parameters prints usage instructions:
 
 ```text
 Usage: nettime [options] <URL>
@@ -80,6 +93,7 @@ Copyright (c) 2017 Ferdinand Prantl
 
 Licensed under the MIT license.
 
+[time]: https://en.wikipedia.org/wiki/Time_(Unix)
 [NodeJS]: http://nodejs.org/
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [HTTP status code]: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
