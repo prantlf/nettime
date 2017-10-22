@@ -38,7 +38,6 @@
   },
   "dependencies": {
     "commander": "^2.11.0",
-    "request": "^2.83.0",
     "sprintf-js": "^1.1.1"
   },
   "devDependencies": {
