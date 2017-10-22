@@ -1,14 +1,12 @@
 'use strict'
 
-const assert = require('assert')
 const fs = require('fs')
 const http = require('http')
 const https = require('https')
 const nettime = require('..')
 const path = require('path')
+const test = require('tap')
 
-const key = readCertificate('key')
-const certificate = readCertificate('cert')
 const ipAddress = '127.0.0.1'
 const unsecurePort = 8899
 const securePort = 9988
@@ -40,8 +38,8 @@ function serve (request, response) {
 function startServers () {
   return createServer(http, unsecurePort)
     .then(createServer.bind(null, https, securePort, {
-      key: key,
-      cert: certificate
+      key: readCertificate('key'),
+      cert: readCertificate('cert')
     }))
 }
 
@@ -66,15 +64,15 @@ function checkRequest (result) {
   const timings = result.timings
   const tcpConnection = timings.tcpConnection
   const firstByte = timings.firstByte
-  assert.equal(typeof result, 'object')
-  assert.equal(Object.keys(result).length, 2)
-  assert.equal(typeof result.timings, 'object')
+  test.equal(typeof result, 'object')
+  test.equal(Object.keys(result).length, 2)
+  test.equal(typeof result.timings, 'object')
   checkTiming(timings.socketOpen)
   checkTiming(tcpConnection)
   checkTiming(firstByte)
   checkTiming(timings.contentTransfer)
   checkTiming(timings.socketClose)
-  assert.ok(getDuration(tcpConnection, firstByte) >= 100 * 1e6)
+  test.ok(getDuration(tcpConnection, firstByte) >= 100 * 1e6)
   return result
 }
 
@@ -87,97 +85,110 @@ function getTime (timing) {
 }
 
 function checkTiming (timing) {
-  assert.ok(Array.isArray(timing))
-  assert.equal(timing.length, 2)
-  assert.equal(typeof timing[0], 'number')
-  assert.equal(typeof timing[1], 'number')
+  test.ok(Array.isArray(timing))
+  test.equal(timing.length, 2)
+  test.equal(typeof timing[0], 'number')
+  test.equal(typeof timing[1], 'number')
 }
 
 function checkNull (timing) {
-  assert.equal(timing, null)
+  test.same(timing, null)
 }
 
-function testHostname () {
+test.equal(typeof nettime, 'function')
+
+test.test('start testing servers', function (test) {
+  startServers()
+    .then(test.end)
+    .catch(test.threw)
+})
+
+test.test('test with a hostname', function (test) {
   return makeRequest('http', 'localhost', unsecurePort)
-    .then(result => {
-      const timings = result.timings
-      assert.equal(result.statusCode, 204)
-      assert.equal(Object.keys(timings).length, 6)
-      checkTiming(timings.dnsLookup)
-      checkNull(timings.tlsHandshake)
-    })
-}
+  .then(result => {
+    const timings = result.timings
+    test.equal(result.statusCode, 204)
+    test.equal(Object.keys(timings).length, 6)
+    checkTiming(timings.dnsLookup)
+    checkNull(timings.tlsHandshake)
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
 
-function testIPAddress () {
+test.test('test with an IP address', function (test) {
   return makeRequest('http', ipAddress, unsecurePort)
-    .then(result => {
-      const timings = result.timings
-      assert.equal(result.statusCode, 204)
-      assert.equal(Object.keys(timings).length, 5)
-      checkNull(timings.dnsLookup)
-      checkNull(timings.tlsHandshake)
-    })
-}
+  .then(result => {
+    const timings = result.timings
+    test.equal(result.statusCode, 204)
+    test.equal(Object.keys(timings).length, 5)
+    checkNull(timings.dnsLookup)
+    checkNull(timings.tlsHandshake)
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
 
-function testSecurity () {
+test.test('test with the HTTPS protocol', function (test) {
   return makeRequest('https', ipAddress, securePort)
-    .then(result => {
-      const timings = result.timings
-      assert.equal(result.statusCode, 204)
-      assert.equal(Object.keys(timings).length, 6)
-      checkNull(timings.dnsLookup)
-      checkTiming(timings.tlsHandshake)
-    })
-}
+  .then(result => {
+    const timings = result.timings
+    test.equal(result.statusCode, 204)
+    test.equal(Object.keys(timings).length, 6)
+    checkNull(timings.dnsLookup)
+    checkTiming(timings.tlsHandshake)
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
 
-function testMissingPage () {
+test.test('test with a missing web page', function (test) {
   return makeRequest('http', ipAddress, unsecurePort, '/missing')
-    .then(result => {
-      const timings = result.timings
-      assert.equal(result.statusCode, 404)
-      assert.equal(Object.keys(timings).length, 5)
-      checkNull(timings.dnsLookup)
-      checkNull(timings.tlsHandshake)
-    })
-}
+  .then(result => {
+    const timings = result.timings
+    test.equal(result.statusCode, 404)
+    test.equal(Object.keys(timings).length, 5)
+    checkNull(timings.dnsLookup)
+    checkNull(timings.tlsHandshake)
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
 
-function testUnreachableHost () {
+test.test('test with an unreachable host', function (test) {
   return makeRequest('http', '127.0.0.2', 80)
-    .then(assert.fail)
-    .catch(error => {
-      assert.ok(error instanceof Error)
-      assert.equal(error.code, 'ECONNREFUSED')
-    })
-}
+  .then(test.fail)
+  .catch(error => {
+    test.ok(error instanceof Error)
+    test.equal(error.code, 'ECONNREFUSED')
+  })
+  .then(test.end)
+})
 
-function testInvalidURL () {
+test.test('test with an invalid URL', function (test) {
   return makeRequest('dummy', ipAddress, 1)
-    .then(assert.fail)
-    .catch(error => {
-      assert.ok(error instanceof Error)
-      assert.ok(error.message.indexOf('dummy:') > 0)
-    })
-}
+  .then(test.fail)
+  .catch(error => {
+    test.ok(error instanceof Error)
+    test.ok(error.message.indexOf('dummy:') > 0)
+  })
+  .then(test.end)
+})
 
-function testDuration () {
-  assert.deepEqual(nettime.getDuration([0, 100], [0, 200]), [0, 100])
-  assert.deepEqual(nettime.getDuration([0, 100], [1, 200]), [1, 100])
-  assert.deepEqual(nettime.getDuration([0, 200], [1, 100]), [0, 999999900])
-}
+test.test('stop testing servers', function (test) {
+  stopServers()
+  test.end()
+})
 
-function testMilliseconds () {
-  assert.deepEqual(nettime.getMilliseconds([0, 1e6]), 1)
-  assert.deepEqual(nettime.getMilliseconds([1, 1000]), 1000.001)
-}
+test.test('test getting duration', function (test) {
+  test.deepEqual(nettime.getDuration([0, 100], [0, 200]), [0, 100])
+  test.deepEqual(nettime.getDuration([0, 100], [1, 200]), [1, 100])
+  test.deepEqual(nettime.getDuration([0, 200], [1, 100]), [0, 999999900])
+  test.end()
+})
 
-assert.equal(typeof nettime, 'function')
-startServers().then(testHostname)
-              .then(testIPAddress)
-              .then(testSecurity)
-              .then(testMissingPage)
-              .then(testUnreachableHost)
-              .then(testInvalidURL)
-              .then(testDuration)
-              .then(testMilliseconds)
-              .catch(console.error)
-              .then(stopServers)
+test.test('test getting milliseconds', function (test) {
+  test.deepEqual(nettime.getMilliseconds([0, 1e6]), 1)
+  test.deepEqual(nettime.getMilliseconds([1, 1000]), 1000.001)
+  test.end()
+})

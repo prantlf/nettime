@@ -31,7 +31,7 @@
   },
   "scripts": {
     "lint": "standard bin/nettime lib/*.js tests/*.js",
-    "check": "node tests/test",
+    "check": "tap tests/*.js",
     "test": "npm run lint && npm run check",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
@@ -43,7 +43,8 @@
   "devDependencies": {
     "eslint-config-standard": "^10.2.1",
     "semantic-release": "^8.2.0",
-    "standard": "^10.0.3"
+    "standard": "^10.0.3",
+    "tap": "^10.7.2"
   },
   "keywords": [
     "nettime",
