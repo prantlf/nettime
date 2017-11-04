@@ -73,7 +73,33 @@ The input object can contain:
 The result object contains:
 
 * `statusCode`: [HTTP status code] of the response (integer).
+* `statusMessage`: HTTP status message for the status code (string).
 * `timings`: object with timing properties from various stages of the request. Timing is an array with two integers - seconds and nanoseconds passed since the request has been made, as returned by [process.hrtime].
+
+```json
+{
+  "statusCode": 301,
+  "statusMessage": "Moved Permanently",
+  "timings": {
+    "socketOpen": [ 0, 13260126 ],
+    "dnsLookup": [ 0, 13747391 ],     // Optional, if hostname was specified
+    "tcpConnection": [ 0, 152135165 ],
+    "tlsHandshake": [ 0, 433219351 ], // Optional, if HTTPS protocol was used
+    "firstByte": [ 1, 888887072 ],
+    "contentTransfer": [ 1, 891221207 ],
+    "socketClose": [ 1, 893156380 ]
+  }
+}
+```
+
+*Note*: The `unit` parameter affects not only the "text" output format of the command line script, but also the "json" one. If set to "ms", timing values will be printed in milliseconds. If set to "s+ns", timings will be printed as arrays in [process.hrtime]'s format. Calling the `nettime` function programmatically will always return the timings as arrays in [process.hrtime]'s format.
+
+### Helper functions
+
+The following static methods are exposed on the `nettime` function to help dealing with [process.hrtime]'s timing format:
+
+* `getDuration(start, end)`: computes the difference between two timings. Expects two arrays in [process.hrtime]'s format and returns the result as an array in the same format.
+* `getMilliseconds(timing)`: converts the timing to milliseconds. Expects an array in [process.hrtime]'s format and returns the result as an integer.
 
 ## Contributing
 
@@ -83,6 +109,7 @@ your code using Grunt.
 
 ## Release History
 
+* 2017-11-04   v0.3.1   Allow ignoring of TLS certificate errors
 * 2017-10-22   v0.3.0   Allow ignoring of TLS certificate errors
 * 2017-10-22   v0.2.0   Add timing for Socket Close
 * 2017-10-21   v0.1.0   Initial release
