@@ -30,7 +30,13 @@ function readCertificate (name) {
 
 function serve (request, response) {
   setTimeout(() => {
-    response.writeHead(request.url === '/' ? 204 : 404)
+    const url = request.url
+    const statusCode = url === '/' ? 204 : url === '/data' ? 200 : 404
+
+    response.writeHead(statusCode)
+    if (statusCode === 200) {
+      response.write('data')
+    }
     response.end()
   }, 100)
 }
@@ -65,7 +71,7 @@ function checkRequest (result) {
   const tcpConnection = timings.tcpConnection
   const firstByte = timings.firstByte
   test.equal(typeof result, 'object')
-  test.equal(Object.keys(result).length, 2)
+  test.equal(Object.keys(result).length, 3)
   test.equal(typeof result.timings, 'object')
   checkTiming(timings.socketOpen)
   checkTiming(tcpConnection)
@@ -108,6 +114,7 @@ test.test('test with a hostname', function (test) {
   .then(result => {
     const timings = result.timings
     test.equal(result.statusCode, 204)
+    test.equal(result.statusMessage, 'No Content')
     test.equal(Object.keys(timings).length, 6)
     checkTiming(timings.dnsLookup)
     checkNull(timings.tlsHandshake)
@@ -117,10 +124,11 @@ test.test('test with a hostname', function (test) {
 })
 
 test.test('test with an IP address', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort)
+  return makeRequest('http', ipAddress, unsecurePort, '/data')
   .then(result => {
     const timings = result.timings
-    test.equal(result.statusCode, 204)
+    test.equal(result.statusCode, 200)
+    test.equal(result.statusMessage, 'OK')
     test.equal(Object.keys(timings).length, 5)
     checkNull(timings.dnsLookup)
     checkNull(timings.tlsHandshake)
@@ -147,6 +155,7 @@ test.test('test with a missing web page', function (test) {
   .then(result => {
     const timings = result.timings
     test.equal(result.statusCode, 404)
+    test.equal(result.statusMessage, 'Not Found')
     test.equal(Object.keys(timings).length, 5)
     checkNull(timings.dnsLookup)
     checkNull(timings.tlsHandshake)
