@@ -109,7 +109,8 @@ your code using Grunt.
 
 ## Release History
 
-* 2017-11-04   v0.3.1   Allow ignoring of TLS certificate errors
+* 2017-11-04   v0.3.2   Print HTTP status message too
+* 2017-10-22   v0.3.1   Round resulting milliseconds instead of truncating them
 * 2017-10-22   v0.3.0   Allow ignoring of TLS certificate errors
 * 2017-10-22   v0.2.0   Add timing for Socket Close
 * 2017-10-21   v0.1.0   Initial release
