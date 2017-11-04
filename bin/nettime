@@ -44,8 +44,8 @@ nettime({
       console.log(result)
     } else {
       print(result.timings, unit)
-      console.log()
-      console.log('Status Code:', result.statusCode)
+      console.log('Status:', result.statusMessage,
+          '(' + result.statusCode + ')')
     }
   })
   .catch(function (error) {
