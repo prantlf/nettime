@@ -76,7 +76,7 @@ The result object contains:
 * `statusMessage`: HTTP status message for the status code (string).
 * `timings`: object with timing properties from various stages of the request. Timing is an array with two integers - seconds and nanoseconds passed since the request has been made, as returned by [process.hrtime].
 
-```json
+```javascript
 {
   "statusCode": 301,
   "statusMessage": "Moved Permanently",
