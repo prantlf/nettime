@@ -43,7 +43,7 @@ Timings are printed to the standard output.
 
 ## Programmatic usage
 
-Make sure that you use [NodeJS] >= 4. Install the `nettime` package locally and get time duration of downloading the response body of a sample web page:
+Make sure that you use [NodeJS] >= 4. Install the `nettime` package locally and get time duration of waiting for the response and downloading the content of a sample web page:
 
 ```bash
 npm install --save nettime
@@ -54,9 +54,11 @@ const nettime = require('nettime')
 nettime('https://www.google.com').then(result => {
   if (result.statusCode === 200) {
     let timings = result.timings
-    let duration = nettime.getDuration(timings.firstByte,
+    let waiting = nettime.getDuration([0, 0], timings.firstByte)
+    let downloading = nettime.getDuration(timings.firstByte,
           timings.contentTransfer)
-    console.log(nettime.getMilliseconds(duration) + 'ms')
+    console.log('Waiting for the response:', nettime.getMilliseconds(waiting) + 'ms')
+    console.log('Downloading the content:', nettime.getMilliseconds(downloading) + 'ms')
   }
 })
 ```
