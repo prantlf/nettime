@@ -1,4 +1,5 @@
 .nyc_output
+cc-test-reporter
 coverage
 node_modules
 nom-debug.log
