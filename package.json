@@ -34,7 +34,7 @@
     "check": "tap tests/*.js",
     "test": "npm run lint && npm run check",
     "cover": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check",
-    "travis:cover": "test `node --version | cut -c 2` -eq 8 && npm cover",
+    "travis:cover": "test `node --version | cut -c 2` -eq 8 && npm run cover",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "dependencies": {
