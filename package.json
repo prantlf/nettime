@@ -47,7 +47,6 @@
   "devDependencies": {
     "codacy-coverage": "^2.0.3",
     "coveralls": "^3.0.0",
-    "eslint-config-standard": "^10.2.1",
     "semantic-release": "^8.2.0",
     "standard": "^10.0.3",
     "tap": "^10.7.2"
