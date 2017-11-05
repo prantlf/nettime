@@ -33,8 +33,9 @@
     "lint": "standard bin/nettime lib/*.js tests/*.js",
     "check": "tap tests/*.js",
     "test": "npm run lint && npm run check",
-    "cover": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check",
-    "travis:cover": "test `node --version | cut -c 2` -eq 8 && npm run cover",
+    "coveralls": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check",
+    "codacy": "cat coverage/lcov.info | CODACY_PROJECT_TOKEN=4d0a15031d4f4de0bca223c3908b7d07 codacy-coverage",
+    "coverage": "test `node --version | cut -c 2` -eq 8 && npm run coveralls && npm run codacy",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "dependencies": {
@@ -42,7 +43,9 @@
     "sprintf-js": "^1.1.1"
   },
   "devDependencies": {
+    "codacy-coverage": "^2.0.3",
     "coveralls": "^3.0.0",
+    "eslint-config-standard": "^10.2.1",
     "semantic-release": "^8.2.0",
     "standard": "^10.0.3",
     "tap": "^10.7.2"
