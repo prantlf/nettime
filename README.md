@@ -36,9 +36,11 @@ Options:
   -f, --format <format>     set output format: text, json
   -H, --header <header>     send specific HTTP header
   -u, --unit <unit>         set time unit: ms, s+ns
+  -U, --user <credentials>  credentials for Basic Authentication
   -h, --help                output usage information
 
 The default output format is "text" and time unit "ms".
+Options -H and -U are the same as -H and -u for curl.
 Timings are printed to the standard output.
 ```
 
@@ -71,6 +73,7 @@ The input argument is a string with a URL to make the request with, or an object
 The input object can contain:
 
 * `url`: string with a URL to make the request with.
+* `credentials`: object with `username` and `password` string properties to be used for formatting of the Basic Authentication HTTP header.
 * `headers`: object with header names as string keys and header values as string values.
 * `rejectUnauthorized`: boolean to refuse finishing the HTTPS request, is set to `true` (the default), if validation of the web site certificate fails; setting it to `false` makes the request ignore certificate errors.
 

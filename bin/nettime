@@ -6,6 +6,7 @@ const commander = require('commander')
 const nettime = require('..')
 const pkg = require('../package.json')
 const print = require('../lib/printer')
+const readlineSync = require('readline-sync')
 
 function collect (value, result) {
   result.push(value)
@@ -19,10 +20,12 @@ commander.version(pkg.version)
          .option('-f, --format <format>', 'set output format: text, json')
          .option('-H, --header <header>', 'send specific HTTP header', collect, [])
          .option('-u, --unit <unit>', 'set time unit: ms, s+ns')
+         .option('-U, --user <credentials>', 'credentials for Basic Authentication')
 
 commander.on('--help', function () {
   console.log()
   console.log('  The default output format is "text" and time unit "ms".')
+  console.log('  Options -H and -U are the same as -H and -u for curl.')
   console.log('  Timings are printed to the standard output.')
   console.log()
   console.log('  Examples:')
@@ -40,14 +43,34 @@ if (!url) {
 const headers = commander.header.reduce(function (result, header) {
   const colon = header.indexOf(':')
   if (colon > 0) {
-    result[header.substr(0, colon).trim()] = header.substr(colon + 1).trim()
+    result[header.substr(0, colon).trim().toLowerCase()] = header.substr(colon + 1).trim()
   }
   return result
 }, {})
 
+let credentials = commander.user
+if (credentials) {
+  let colon = credentials.indexOf(':')
+  let username, password
+  if (colon > 0) {
+    username = credentials.substr(0, colon)
+    password = credentials.substr(colon + 1)
+  } else {
+    username = credentials
+    password = readlineSync.question('Password: ', {
+      hideEchoBack: true
+    })
+  }
+  credentials = {
+    username: username,
+    password: password
+  }
+}
+
 nettime({
   url: url,
   headers: headers,
+  credentials: credentials,
   rejectUnauthorized: !commander.ignoreCertificate
 })
   .then(function (result) {
