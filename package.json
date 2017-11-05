@@ -35,9 +35,10 @@
     "test": "npm run lint && npm run check",
     "coveralls": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check -- --cov --coverage-report=lcov",
     "codacy": "cat coverage/lcov.info | CODACY_PROJECT_TOKEN=4d0a15031d4f4de0bca223c3908b7d07 codacy-coverage",
+    "codecov": "CODECOV_TOKEN=81a735c5-c3a1-4ef8-932a-95470240ce26 codecov",
     "codeclimate:download": "curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && chmod +x ./cc-test-reporter",
     "codeclimate:execute": "CC_TEST_REPORTER_ID=261ca831f78e96f538d8f77ed64b9835b040ed666fe54dd136b6e6c466a55e35 ./cc-test-reporter before-build && cat coverage/lcov.info | CC_TEST_REPORTER_ID=261ca831f78e96f538d8f77ed64b9835b040ed666fe54dd136b6e6c466a55e35 ./cc-test-reporter after-build",
-    "coverage": "test `node --version | cut -c 2` -eq 8 && npm run coveralls && npm run codacy && npm run codeclimate:download && npm run codeclimate:execute",
+    "coverage": "test `node --version | cut -c 2` -eq 8 && npm run coveralls && npm run codacy && npm run codecov && npm run codeclimate:download && npm run codeclimate:execute",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "dependencies": {
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "codacy-coverage": "^2.0.3",
+    "codecov": "^3.0.0",
     "coveralls": "^3.0.0",
     "semantic-release": "^8.2.0",
     "standard": "^10.0.3",
