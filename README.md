@@ -34,6 +34,7 @@ Options:
   -V, --version             output the version number
   -e, --ignore-certificate  ignore certificate errors
   -f, --format <format>     set output format: text, json
+  -H, --header <header>     send specific HTTP header
   -u, --unit <unit>         set time unit: ms, s+ns
   -h, --help                output usage information
 
@@ -70,6 +71,7 @@ The input argument is a string with a URL to make the request with, or an object
 The input object can contain:
 
 * `url`: string with a URL to make the request with.
+* `headers`: object with header names as string keys and header values as string values.
 * `rejectUnauthorized`: boolean to refuse finishing the HTTPS request, is set to `true` (the default), if validation of the web site certificate fails; setting it to `false` makes the request ignore certificate errors.
 
 The result object contains:

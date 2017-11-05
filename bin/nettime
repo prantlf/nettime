@@ -7,11 +7,17 @@ const nettime = require('..')
 const pkg = require('../package.json')
 const print = require('../lib/printer')
 
+function collect (value, result) {
+  result.push(value)
+  return result
+}
+
 commander.version(pkg.version)
          .description(pkg.description)
          .usage('[options] <URL>')
          .option('-e, --ignore-certificate', 'ignore certificate errors')
          .option('-f, --format <format>', 'set output format: text, json')
+         .option('-H, --header <header>', 'send specific HTTP header', collect, [])
          .option('-u, --unit <unit>', 'set time unit: ms, s+ns')
 
 commander.on('--help', function () {
@@ -31,8 +37,17 @@ if (!url) {
   commander.help()
 }
 
+const headers = commander.header.reduce(function (result, header) {
+  const colon = header.indexOf(':')
+  if (colon > 0) {
+    result[header.substr(0, colon).trim()] = header.substr(colon + 1).trim()
+  }
+  return result
+}, {})
+
 nettime({
   url: url,
+  headers: headers,
   rejectUnauthorized: !commander.ignoreCertificate
 })
   .then(function (result) {
