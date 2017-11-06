@@ -35,6 +35,7 @@ Options:
   -e, --ignore-certificate  ignore certificate errors
   -f, --format <format>     set output format: text, json
   -H, --header <header>     send specific HTTP header
+  -i, --include             include response headers in the output file
   -I, --head                use HEAD verb to show document info only
   -o, --output <file>       write the received data to a file
   -u, --unit <unit>         set time unit: ms, s+ns
@@ -43,7 +44,7 @@ Options:
   -h, --help                output usage information
 
 The default output format is "text" and time unit "ms".
-Options "HIXoU" are the same as "HIXou" for curl.
+Options "HiIXoU" are the same as "HiIXou" for curl.
 Timings are printed to the standard output.
 ```
 
@@ -85,14 +86,16 @@ The input object can contain:
 
 The result object contains:
 
+* `httpVersion`: HTTP version, which the server responsed with (string).
 * `statusCode`: [HTTP status code] of the response (integer).
 * `statusMessage`: HTTP status message for the status code (string).
 * `timings`: object with timing properties from various stages of the request. Timing is an array with two integers - seconds and nanoseconds passed since the request has been made, as returned by [process.hrtime].
 
 ```javascript
 {
-  "statusCode": 301,
-  "statusMessage": "Moved Permanently",
+  "httpVersion": '1.1',
+  "statusCode": 200,
+  "statusMessage": "OK",
   "timings": {
     "socketOpen": [ 0, 13260126 ],
     "dnsLookup": [ 0, 13747391 ],     // Optional, if hostname was specified

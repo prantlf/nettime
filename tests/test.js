@@ -36,12 +36,14 @@ function serve (request, response) {
 
     lastHeaders = request.headers
     lastMethod = request.method
-    response.writeHead(statusCode)
+    response.writeHead(statusCode, {
+      test: 'ok'
+    })
     if (statusCode === 200) {
       response.write('data')
     }
     response.end()
-  }, 100)
+  }, 1)
 }
 
 function startServers () {
@@ -63,6 +65,7 @@ function makeRequest (protocol, host, port, path, options) {
   const https = protocol === 'https'
   const url = protocol + '://' + host + ':' + port + (path || '')
   let credentials, headers, method, outputFile, returnResponse
+  let includeHeaders
   if (options) {
     if (options.username) {
       credentials = options
@@ -70,8 +73,10 @@ function makeRequest (protocol, host, port, path, options) {
       method = options.method
     } else if (options.outputFile) {
       outputFile = options.outputFile
+      includeHeaders = options.includeHeaders
     } else if (options.returnResponse) {
-      returnResponse = options.returnResponse
+      returnResponse = true
+      includeHeaders = options.includeHeaders
     } else {
       headers = options
     }
@@ -80,13 +85,15 @@ function makeRequest (protocol, host, port, path, options) {
     url: url,
     credentials: credentials,
     headers: headers,
+    includeHeaders: includeHeaders,
     method: method,
     outputFile: outputFile,
     rejectUnauthorized: false,
     returnResponse: returnResponse
   } : url)
   .then(checkRequest.bind(null, {
-    returnResponse: returnResponse
+    returnResponse: returnResponse,
+    includeHeaders: includeHeaders
   }))
 }
 
@@ -94,24 +101,34 @@ function checkRequest (options, result) {
   const timings = result.timings
   const tcpConnection = timings.tcpConnection
   const firstByte = timings.firstByte
+  let resultCount = 4
   test.equal(typeof result, 'object')
-  test.equal(Object.keys(result).length, options.returnResponse ? 4 : 3)
+  if (options.returnResponse) {
+    ++resultCount
+    if (options.includeHeaders) {
+      ++resultCount
+    }
+  }
+  test.equal(Object.keys(result).length, resultCount)
+  test.equal(result.httpVersion, '1.1')
   test.equal(typeof timings, 'object')
   checkTiming(timings.socketOpen)
   checkTiming(tcpConnection)
   checkTiming(firstByte)
   checkTiming(timings.contentTransfer)
   checkTiming(timings.socketClose)
-  test.ok(getDuration(tcpConnection, firstByte) >= 100 * 1e6)
+  test.ok(getDuration(tcpConnection, firstByte) >= 1 * 1e6)
   return result
 }
 
 function getDuration (start, end) {
-  return getTime(end) - getTime(start)
-}
-
-function getTime (timing) {
-  return timing[0] * 1e9 + timing[1]
+  let seconds = end[0] - start[0]
+  let nanoseconds = end[1] - start[1]
+  if (nanoseconds < 0) {
+    --seconds
+    nanoseconds += 1e9
+  }
+  return seconds * 1e9 + nanoseconds
 }
 
 function checkTiming (timing) {
@@ -250,12 +267,13 @@ test.test('test with the HEAD verb', function (test) {
   .then(test.end)
 })
 
-test.test('test returning of the received data', function (test) {
+test.test('test returning of received data', function (test) {
   return makeRequest('http', ipAddress, unsecurePort, '/data', {
     returnResponse: true
   })
   .then(result => {
     const response = result.response
+    test.ok(!result.headers)
     test.ok(response)
     test.equal(response.length, 4)
   })
@@ -263,7 +281,24 @@ test.test('test returning of the received data', function (test) {
   .then(test.end)
 })
 
-test.test('test with an output file', function (test) {
+test.test('test returning of received data with headers', function (test) {
+  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+    returnResponse: true,
+    includeHeaders: true
+  })
+  .then(result => {
+    const response = result.response
+    const headers = result.headers
+    test.ok(headers)
+    test.equal(headers.test, 'ok')
+    test.ok(response)
+    test.equal(response.length, 4)
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test writing an output file', function (test) {
   return makeRequest('http', ipAddress, unsecurePort, '/data', {
     outputFile: 'test.out'
   })
@@ -271,6 +306,21 @@ test.test('test with an output file', function (test) {
     const stat = fs.statSync('test.out')
     test.ok(stat)
     test.equal(stat.size, 4)
+    fs.unlinkSync('test.out')
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test writing an output file with headers', function (test) {
+  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+    outputFile: 'test.out',
+    includeHeaders: true
+  })
+  .then(result => {
+    const stat = fs.statSync('test.out')
+    test.ok(stat)
+    test.ok(stat.size > 4)
     fs.unlinkSync('test.out')
   })
   .catch(test.threw)
