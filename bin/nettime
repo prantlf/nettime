@@ -17,6 +17,7 @@ commander.version(pkg.version)
          .description(pkg.description)
          .usage('[options] <URL>')
          .option('-e, --ignore-certificate', 'ignore certificate errors')
+         .option('-d, --data <data>', 'data to be sent using the POST verb')
          .option('-f, --format <format>', 'set output format: text, json')
          .option('-H, --header <header>', 'send specific HTTP header', collect, [])
          .option('-i, --include', 'include response headers in the output file')
@@ -29,7 +30,7 @@ commander.version(pkg.version)
 commander.on('--help', function () {
   console.log()
   console.log('  The default output format is "text" and time unit "ms".')
-  console.log('  Options "HiIXoU" are the same as "HiIXou" for curl.')
+  console.log('  Options "HiIXdoU" are the same as "HiIXdou" for curl.')
   console.log('  Timings are printed to the standard output.')
   console.log()
   console.log('  Examples:')
@@ -73,7 +74,9 @@ if (credentials) {
 
 nettime({
   url: url,
-  method: commander.head ? 'HEAD' : commander.request || 'GET',
+  data: commander.data,
+  method: commander.request || (commander.head ? 'HEAD'
+    : commander.data ? 'POST' : 'GET'),
   headers: headers,
   credentials: credentials,
   outputFile: commander.output,

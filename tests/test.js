@@ -11,7 +11,7 @@ const ipAddress = '127.0.0.1'
 const unsecurePort = 8899
 const securePort = 9988
 const servers = []
-let lastHeaders, lastMethod
+let lastHeaders, lastMethod, lastData
 
 function createServer (protocol, port, options) {
   return new Promise((resolve, reject) => {
@@ -32,17 +32,30 @@ function readCertificate (name) {
 function serve (request, response) {
   setTimeout(() => {
     const url = request.url
-    const statusCode = url === '/' ? 204 : url === '/data' ? 200 : 404
+    const upload = url === '/upload'
+    const statusCode = url === '/' ? 204 : url === '/data' || upload ? 200 : 404
+
+    function sendResponse () {
+      response.writeHead(statusCode, {
+        test: 'ok'
+      })
+      if (statusCode === 200) {
+        response.write('data')
+      }
+      response.end()
+    }
 
     lastHeaders = request.headers
     lastMethod = request.method
-    response.writeHead(statusCode, {
-      test: 'ok'
-    })
-    if (statusCode === 200) {
-      response.write('data')
+    if (upload) {
+      lastData = ''
+      request.on('data', function (data) {
+        lastData += data
+      })
+      .on('end', sendResponse)
+    } else {
+      sendResponse()
     }
-    response.end()
   }, 1)
 }
 
@@ -65,7 +78,7 @@ function makeRequest (protocol, host, port, path, options) {
   const https = protocol === 'https'
   const url = protocol + '://' + host + ':' + port + (path || '')
   let credentials, headers, method, outputFile, returnResponse
-  let includeHeaders
+  let includeHeaders, data
   if (options) {
     if (options.username) {
       credentials = options
@@ -77,6 +90,8 @@ function makeRequest (protocol, host, port, path, options) {
     } else if (options.returnResponse) {
       returnResponse = true
       includeHeaders = options.includeHeaders
+    } else if (options.data) {
+      data = options.data
     } else {
       headers = options
     }
@@ -84,6 +99,7 @@ function makeRequest (protocol, host, port, path, options) {
   return nettime(https || options ? {
     url: url,
     credentials: credentials,
+    data: data,
     headers: headers,
     includeHeaders: includeHeaders,
     method: method,
@@ -322,6 +338,18 @@ test.test('test writing an output file with headers', function (test) {
     test.ok(stat)
     test.ok(stat.size > 4)
     fs.unlinkSync('test.out')
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test posting data', function (test) {
+  return makeRequest('http', ipAddress, unsecurePort, '/upload', {
+    data: 'test=ok'
+  })
+  .then(result => {
+    test.equal(lastMethod, 'POST')
+    test.equal(lastData, 'test=ok')
   })
   .catch(test.threw)
   .then(test.end)

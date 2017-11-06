@@ -32,6 +32,7 @@ Usage: nettime [options] <URL>
 Options:
 
   -V, --version             output the version number
+  -d, --data <data>         data to be sent using the POST verb
   -e, --ignore-certificate  ignore certificate errors
   -f, --format <format>     set output format: text, json
   -H, --header <header>     send specific HTTP header
@@ -44,7 +45,7 @@ Options:
   -h, --help                output usage information
 
 The default output format is "text" and time unit "ms".
-Options "HiIXoU" are the same as "HiIXou" for curl.
+Options "HiIXdoU" are the same as "HiIXdou" for curl.
 Timings are printed to the standard output.
 ```
 
@@ -78,8 +79,9 @@ The input object can contain:
 
 * `url`: string with a URL to make the request with.
 * `credentials`: object with `username` and `password` string properties to be used for formatting of the Basic Authentication HTTP header.
+* `data`: string or Buffer to send to the server using the HTTP verb `POST` and the content type `application/x-www-form-urlencoded` by default.
 * `headers`: object with header names as string keys and header values as string values.
-* `method`: HTTP verb to use in the HTTP request: `GET` (default) or `HEAD`.
+* `method`: HTTP verb to use in the HTTP request; `GET` is the default, unless `-i` or `-d` options are not set.
 * `outputFile`: file path to write the received data to.
 * `rejectUnauthorized`: boolean to refuse finishing the HTTPS request, is set to `true` (the default), if validation of the web site certificate fails; setting it to `false` makes the request ignore certificate errors.
 * `returnResponse`: includes property `response` (`Buffer`) with the received data in the promised result object.
