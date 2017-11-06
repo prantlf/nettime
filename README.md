@@ -4,6 +4,16 @@
 
 Prints time duration of various stages of a HTTP/S request, like DNS lookup, TLS handshake, Time to First Byte etc. Similarly to the [time] command, which measures process timings, the `nettime` command measures HTTP/S request timings.  You can find more information in [Understanding & Measuring HTTP Timings with Node.js](https://blog.risingstack.com/measuring-http-timings-node-js/).
 
+**Attention**: Command-line options changed between 0.x and 1.x versions, so that they become compatible with [curl]. If you use the `nettime` command-line tool, check the affected options:
+
+```text
+-e, --ignore-certificate  =>  -k, --insecure
+-u, --unit                =>  -t, --time-unit
+-U, --user                =>  -u, --user
+```
+
+The programmatic interface did not change and has remained compatible.
+
 ## Command-line usage
 
 Make sure that you have [NodeJS] >= 4 installed. Install the `nettime` package globally and print timings of a sample web site:
@@ -45,7 +55,7 @@ Options:
   -h, --help                output usage information
 
 The default output format is "text" and time unit "ms". Other options
-are compatible with curl. Timings are printed to the standard output.
+are compatible with [curl]. Timings are printed to the standard output.
 ```
 
 ## Programmatic usage
@@ -126,7 +136,8 @@ your code using Grunt.
 
 ## Release History
 
-* 2017-11-06   v0.5.0   Add support for the curl options "iIXdo"
+* 2017-11-06   v1.0.0   Make command-line options compatible with [curl]
+* 2017-11-06   v0.5.0   Add support for the [curl] options "iIXdo"
 * 2017-11-06   v0.4.0   Support custom headers and Basic Authentication
 * 2017-11-05   v0.3.3   Do not add seconds in nanosecond precision to avoid errors
 * 2017-11-04   v0.3.2   Print HTTP status message too
@@ -146,3 +157,4 @@ Licensed under the MIT license.
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [HTTP status code]: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 [process.hrtime]: https://nodejs.org/api/process.html#process_process_hrtime_time
+[curl]: https://curl.haxx.se/
