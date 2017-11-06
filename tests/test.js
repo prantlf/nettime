@@ -56,7 +56,7 @@ function serve (request, response) {
     } else {
       sendResponse()
     }
-  }, 1)
+  }, 2)
 }
 
 function startServers () {
