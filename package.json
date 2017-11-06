@@ -33,7 +33,7 @@
     "lint": "standard bin/nettime lib/*.js tests/*.js",
     "check": "tap tests/*.js",
     "test": "npm run lint && npm run check",
-    "coveralls": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check -- --cov --coverage-report=lcov",
+    "coveralls": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check -- --cov --coverage-report=lcov --no-browser",
     "codacy": "cat coverage/lcov.info | CODACY_PROJECT_TOKEN=4d0a15031d4f4de0bca223c3908b7d07 codacy-coverage",
     "codecov": "CODECOV_TOKEN=81a735c5-c3a1-4ef8-932a-95470240ce26 codecov",
     "codeclimate:download": "curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && chmod +x ./cc-test-reporter",
