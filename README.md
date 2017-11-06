@@ -130,9 +130,7 @@ The following static methods are exposed on the `nettime` function to help deali
 
 ## Contributing
 
-In lieu of a formal styleguide, take care to maintain the existing coding
-style.  Add unit tests for any new or changed functionality. Lint and test
-your code using Grunt.
+In lieu of a formal styleguide, take care to maintain the existing coding style.  Add unit tests for any new or changed functionality. Lint and test your code using Grunt.
 
 ## Release History
 
