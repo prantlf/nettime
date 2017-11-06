@@ -127,6 +127,7 @@ your code using Grunt.
 
 ## Release History
 
+* 2017-11-06   v0.5.0   Add support for the curl options "iIXdo"
 * 2017-11-06   v0.4.0   Support custom headers and Basic Authentication
 * 2017-11-05   v0.3.3   Do not add seconds in nanosecond precision to avoid errors
 * 2017-11-04   v0.3.2   Print HTTP status message too
