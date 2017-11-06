@@ -44,6 +44,7 @@
   "dependencies": {
     "commander": "^2.11.0",
     "readline-sync": "^1.4.7",
+    "safe-buffer": "^5.1.1",
     "sprintf-js": "^1.1.1"
   },
   "devDependencies": {

@@ -11,6 +11,7 @@ const ipAddress = '127.0.0.1'
 const unsecurePort = 8899
 const securePort = 9988
 const servers = []
+let lastHeaders
 
 function createServer (protocol, port, options) {
   return new Promise((resolve, reject) => {
@@ -33,6 +34,7 @@ function serve (request, response) {
     const url = request.url
     const statusCode = url === '/' ? 204 : url === '/data' ? 200 : 404
 
+    lastHeaders = request.headers
     response.writeHead(statusCode)
     if (statusCode === 200) {
       response.write('data')
@@ -56,12 +58,24 @@ function stopServers () {
   }
 }
 
-function makeRequest (protocol, host, port, path) {
+function makeRequest (protocol, host, port, path, headers) {
   const https = protocol === 'https'
   const url = protocol + '://' + host + ':' + port + (path || '')
+  let credentials
+  if (headers && headers.username) {
+    credentials = headers
+    headers = undefined
+  }
   return nettime(https ? {
     url: url,
+    headers: headers,
     rejectUnauthorized: false
+  } : headers ? {
+    url: url,
+    headers: headers
+  } : credentials ? {
+    url: url,
+    credentials: credentials
   } : url)
   .then(checkRequest)
 }
@@ -181,6 +195,49 @@ test.test('test with an invalid URL', function (test) {
     test.ok(error instanceof Error)
     test.ok(error.message.indexOf('dummy:') > 0)
   })
+  .then(test.end)
+})
+
+test.test('test with custom headers', function (test) {
+  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+    TestHeader: 'Test value'
+  })
+  .then(result => {
+    const timings = result.timings
+    test.equal(result.statusCode, 200)
+    test.equal(result.statusMessage, 'OK')
+    test.equal(Object.keys(timings).length, 5)
+    checkNull(timings.dnsLookup)
+    checkNull(timings.tlsHandshake)
+    test.ok(lastHeaders)
+    test.equal(Object.keys(lastHeaders).length, 3)
+    test.equal(lastHeaders.connection, 'close')
+    test.equal(lastHeaders.host, '127.0.0.1:8899')
+    test.equal(lastHeaders.testheader, 'Test value')
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test with credentials', function (test) {
+  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+    username: 'guest',
+    password: 'secret'
+  })
+  .then(result => {
+    const timings = result.timings
+    test.equal(result.statusCode, 200)
+    test.equal(result.statusMessage, 'OK')
+    test.equal(Object.keys(timings).length, 5)
+    checkNull(timings.dnsLookup)
+    checkNull(timings.tlsHandshake)
+    test.ok(lastHeaders)
+    test.equal(Object.keys(lastHeaders).length, 3)
+    test.equal(lastHeaders.connection, 'close')
+    test.equal(lastHeaders.host, '127.0.0.1:8899')
+    test.equal(lastHeaders.authorization, 'Basic Z3Vlc3Q6c2VjcmV0')
+  })
+  .catch(test.threw)
   .then(test.end)
 })
 
