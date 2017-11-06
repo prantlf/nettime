@@ -38,10 +38,11 @@ Options:
   -I, --head                use HEAD verb to show document info only
   -u, --unit <unit>         set time unit: ms, s+ns
   -U, --user <credentials>  credentials for Basic Authentication
+  -X, --request <verb>      specify HTTP verb to use for the request
   -h, --help                output usage information
 
 The default output format is "text" and time unit "ms".
-Options -H, -I and -U are the same as -H, -I and -u for curl.
+Options "HIXU" are the same as "HIXu" for curl.
 Timings are printed to the standard output.
 ```
 
