@@ -19,13 +19,14 @@ commander.version(pkg.version)
          .option('-e, --ignore-certificate', 'ignore certificate errors')
          .option('-f, --format <format>', 'set output format: text, json')
          .option('-H, --header <header>', 'send specific HTTP header', collect, [])
+         .option('-I, --head', 'use HEAD verb to show document info only')
          .option('-u, --unit <unit>', 'set time unit: ms, s+ns')
          .option('-U, --user <credentials>', 'credentials for Basic Authentication')
 
 commander.on('--help', function () {
   console.log()
   console.log('  The default output format is "text" and time unit "ms".')
-  console.log('  Options -H and -U are the same as -H and -u for curl.')
+  console.log('  Options -H, -I and -U are the same as -H, -I and -u for curl.')
   console.log('  Timings are printed to the standard output.')
   console.log()
   console.log('  Examples:')
@@ -69,6 +70,7 @@ if (credentials) {
 
 nettime({
   url: url,
+  method: commander.head ? 'HEAD' : 'GET',
   headers: headers,
   credentials: credentials,
   rejectUnauthorized: !commander.ignoreCertificate
