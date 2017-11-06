@@ -16,22 +16,21 @@ function collect (value, result) {
 commander.version(pkg.version)
          .description(pkg.description)
          .usage('[options] <URL>')
-         .option('-e, --ignore-certificate', 'ignore certificate errors')
          .option('-d, --data <data>', 'data to be sent using the POST verb')
          .option('-f, --format <format>', 'set output format: text, json')
          .option('-H, --header <header>', 'send specific HTTP header', collect, [])
          .option('-i, --include', 'include response headers in the output file')
          .option('-I, --head', 'use HEAD verb to show document info only')
+         .option('-k, --insecure', 'ignore certificate errors')
          .option('-o, --output <file>', 'write the received data to a file')
-         .option('-u, --unit <unit>', 'set time unit: ms, s+ns')
-         .option('-U, --user <credentials>', 'credentials for Basic Authentication')
+         .option('-t, --time-unit <unit>', 'set time unit: ms, s+ns')
+         .option('-u, --user <credentials>', 'credentials for Basic Authentication')
          .option('-X, --request <verb>', 'specify HTTP verb to use for the request')
 
 commander.on('--help', function () {
   console.log()
-  console.log('  The default output format is "text" and time unit "ms".')
-  console.log('  Options "HiIXdoU" are the same as "HiIXdou" for curl.')
-  console.log('  Timings are printed to the standard output.')
+  console.log('  The default output format is "text" and time unit "ms". Other options')
+  console.log('  are compatible with curl. Timings are printed to the standard output.')
   console.log()
   console.log('  Examples:')
   console.log()
@@ -81,17 +80,17 @@ nettime({
   credentials: credentials,
   outputFile: commander.output,
   includeHeaders: commander.include,
-  rejectUnauthorized: !commander.ignoreCertificate
+  rejectUnauthorized: !commander.insecure
 })
   .then(function (result) {
-    const unit = commander.unit
+    const timeUnit = commander.timeUnit
     if (commander.format === 'json') {
-      if (unit !== 's+ns') {
+      if (timeUnit !== 's+ns') {
         convertToMilliseconds(result.timings)
       }
       console.log(result)
     } else {
-      print(result.timings, unit)
+      print(result.timings, timeUnit)
       console.log('Response: HTTP/' + result.httpVersion, result.statusCode,
         result.statusMessage)
     }

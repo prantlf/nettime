@@ -33,20 +33,19 @@ Options:
 
   -V, --version             output the version number
   -d, --data <data>         data to be sent using the POST verb
-  -e, --ignore-certificate  ignore certificate errors
   -f, --format <format>     set output format: text, json
   -H, --header <header>     send specific HTTP header
   -i, --include             include response headers in the output file
   -I, --head                use HEAD verb to show document info only
+  -k, --insecure            ignore certificate errors
   -o, --output <file>       write the received data to a file
-  -u, --unit <unit>         set time unit: ms, s+ns
-  -U, --user <credentials>  credentials for Basic Authentication
+  -t, --time-unit <unit>    set time unit: ms, s+ns
+  -u, --user <credentials>  credentials for Basic Authentication
   -X, --request <verb>      specify HTTP verb to use for the request
   -h, --help                output usage information
 
-The default output format is "text" and time unit "ms".
-Options "HiIXdoU" are the same as "HiIXdou" for curl.
-Timings are printed to the standard output.
+The default output format is "text" and time unit "ms". Other options
+are compatible with curl. Timings are printed to the standard output.
 ```
 
 ## Programmatic usage
@@ -110,7 +109,7 @@ The result object contains:
 }
 ```
 
-*Note*: The `unit` parameter affects not only the "text" output format of the command line script, but also the "json" one. If set to "ms", timing values will be printed in milliseconds. If set to "s+ns", timings will be printed as arrays in [process.hrtime]'s format. Calling the `nettime` function programmatically will always return the timings as arrays in [process.hrtime]'s format.
+*Note*: The `time-unit` parameter affects not only the "text" output format of the command line script, but also the "json" one. If set to "ms", timing values will be printed in milliseconds. If set to "s+ns", timings will be printed as arrays in [process.hrtime]'s format. Calling the `nettime` function programmatically will always return the timings as arrays in [process.hrtime]'s format.
 
 ### Helper functions
 
