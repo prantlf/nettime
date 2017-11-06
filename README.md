@@ -36,13 +36,14 @@ Options:
   -f, --format <format>     set output format: text, json
   -H, --header <header>     send specific HTTP header
   -I, --head                use HEAD verb to show document info only
+  -o, --output <file>       write the received data to a file
   -u, --unit <unit>         set time unit: ms, s+ns
   -U, --user <credentials>  credentials for Basic Authentication
   -X, --request <verb>      specify HTTP verb to use for the request
   -h, --help                output usage information
 
 The default output format is "text" and time unit "ms".
-Options "HIXU" are the same as "HIXu" for curl.
+Options "HIXoU" are the same as "HIXou" for curl.
 Timings are printed to the standard output.
 ```
 
@@ -78,7 +79,9 @@ The input object can contain:
 * `credentials`: object with `username` and `password` string properties to be used for formatting of the Basic Authentication HTTP header.
 * `headers`: object with header names as string keys and header values as string values.
 * `method`: HTTP verb to use in the HTTP request: `GET` (default) or `HEAD`.
+* `outputFile`: file path to write the received data to.
 * `rejectUnauthorized`: boolean to refuse finishing the HTTPS request, is set to `true` (the default), if validation of the web site certificate fails; setting it to `false` makes the request ignore certificate errors.
+* `returnResponse`: includes property `response` (`Buffer`) with the received data in the promised result object.
 
 The result object contains:
 

@@ -20,6 +20,7 @@ commander.version(pkg.version)
          .option('-f, --format <format>', 'set output format: text, json')
          .option('-H, --header <header>', 'send specific HTTP header', collect, [])
          .option('-I, --head', 'use HEAD verb to show document info only')
+         .option('-o, --output <file>', 'write the received data to a file')
          .option('-u, --unit <unit>', 'set time unit: ms, s+ns')
          .option('-U, --user <credentials>', 'credentials for Basic Authentication')
          .option('-X, --request <verb>', 'specify HTTP verb to use for the request')
@@ -27,7 +28,7 @@ commander.version(pkg.version)
 commander.on('--help', function () {
   console.log()
   console.log('  The default output format is "text" and time unit "ms".')
-  console.log('  Options "HIXU" are the same as "HIXu" for curl.')
+  console.log('  Options "HIXoU" are the same as "HIXou" for curl.')
   console.log('  Timings are printed to the standard output.')
   console.log()
   console.log('  Examples:')
@@ -74,6 +75,7 @@ nettime({
   method: commander.head ? 'HEAD' : commander.request || 'GET',
   headers: headers,
   credentials: credentials,
+  outputFile: commander.output,
   rejectUnauthorized: !commander.ignoreCertificate
 })
   .then(function (result) {

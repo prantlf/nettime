@@ -62,12 +62,16 @@ function stopServers () {
 function makeRequest (protocol, host, port, path, options) {
   const https = protocol === 'https'
   const url = protocol + '://' + host + ':' + port + (path || '')
-  let credentials, headers, method
+  let credentials, headers, method, outputFile, returnResponse
   if (options) {
     if (options.username) {
       credentials = options
     } else if (options.method) {
       method = options.method
+    } else if (options.outputFile) {
+      outputFile = options.outputFile
+    } else if (options.returnResponse) {
+      returnResponse = options.returnResponse
     } else {
       headers = options
     }
@@ -77,18 +81,22 @@ function makeRequest (protocol, host, port, path, options) {
     credentials: credentials,
     headers: headers,
     method: method,
-    rejectUnauthorized: false
+    outputFile: outputFile,
+    rejectUnauthorized: false,
+    returnResponse: returnResponse
   } : url)
-  .then(checkRequest)
+  .then(checkRequest.bind(null, {
+    returnResponse: returnResponse
+  }))
 }
 
-function checkRequest (result) {
+function checkRequest (options, result) {
   const timings = result.timings
   const tcpConnection = timings.tcpConnection
   const firstByte = timings.firstByte
   test.equal(typeof result, 'object')
-  test.equal(Object.keys(result).length, 3)
-  test.equal(typeof result.timings, 'object')
+  test.equal(Object.keys(result).length, options.returnResponse ? 4 : 3)
+  test.equal(typeof timings, 'object')
   checkTiming(timings.socketOpen)
   checkTiming(tcpConnection)
   checkTiming(firstByte)
@@ -237,6 +245,33 @@ test.test('test with the HEAD verb', function (test) {
   })
   .then(result => {
     test.equal(lastMethod, 'HEAD')
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test returning of the received data', function (test) {
+  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+    returnResponse: true
+  })
+  .then(result => {
+    const response = result.response
+    test.ok(response)
+    test.equal(response.length, 4)
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test with an output file', function (test) {
+  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+    outputFile: 'test.out'
+  })
+  .then(result => {
+    const stat = fs.statSync('test.out')
+    test.ok(stat)
+    test.equal(stat.size, 4)
+    fs.unlinkSync('test.out')
   })
   .catch(test.threw)
   .then(test.end)
