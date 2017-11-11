@@ -18,7 +18,7 @@ const unsecurePort = 8899
 const securePort = 9988
 const http2Port = 9898
 const servers = []
-let lastHeaders, lastMethod, lastData, lastVersion
+let lastRequest
 
 function createServer (protocol, port, options) {
   if (protocol) {
@@ -42,27 +42,31 @@ function readCertificate (name) {
 function serve (request, response) {
   setTimeout(() => {
     const url = request.url
+    const download = url === '/download'
     const upload = url === '/upload'
-    const statusCode = url === '/' ? 204
-                                   : url === '/data' || upload ? 200 : 404
+    var data
 
     function sendResponse () {
-      response.writeHead(statusCode, {
+      const ok = download || upload
+      lastRequest = {
+        data: data,
+        headers: request.headers,
+        httpVersion: request.httpVersion,
+        method: request.method,
+      }
+      response.writeHead(ok ? 200 : url === '/' ? 204 : 404, {
         test: 'ok'
       })
-      if (statusCode === 200) {
+      if (ok) {
         response.write('data')
       }
       response.end()
     }
 
-    lastHeaders = request.headers
-    lastMethod = request.method
-    lastVersion = request.httpVersion
     if (upload) {
-      lastData = ''
-      request.on('data', function (data) {
-        lastData += data
+      data = ''
+      request.on('data', chunk => {
+        data += chunk
       })
       .on('end', sendResponse)
     } else {
@@ -149,7 +153,7 @@ function checkRequest (options, result) {
     result.httpVersion = '1.0'
   }
   test.equal(result.httpVersion, httpVersion)
-  test.equal(lastVersion, httpVersion)
+  test.equal(lastRequest.httpVersion, httpVersion)
   test.equal(typeof timings, 'object')
   checkTiming(timings.socketOpen)
   checkTiming(tcpConnection)
@@ -183,13 +187,13 @@ function checkNull (timing) {
 
 test.equal(typeof nettime, 'function')
 
-test.test('start testing servers', function (test) {
+test.test('start testing servers', test => {
   startServers()
     .then(test.end)
     .catch(test.threw)
 })
 
-test.test('test with a hostname', function (test) {
+test.test('test with a hostname', test => {
   return makeRequest('http', 'localhost', unsecurePort)
   .then(result => {
     const timings = result.timings
@@ -203,8 +207,8 @@ test.test('test with a hostname', function (test) {
   .then(test.end)
 })
 
-test.test('test with an IP address', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data')
+test.test('test with an IP address', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download')
   .then(result => {
     const timings = result.timings
     test.equal(result.statusCode, 200)
@@ -217,7 +221,7 @@ test.test('test with an IP address', function (test) {
   .then(test.end)
 })
 
-test.test('test with the HTTPS protocol', function (test) {
+test.test('test with the HTTPS protocol', test => {
   return makeRequest('https', ipAddress, securePort)
   .then(result => {
     const timings = result.timings
@@ -230,7 +234,7 @@ test.test('test with the HTTPS protocol', function (test) {
   .then(test.end)
 })
 
-test.test('test with a missing web page', function (test) {
+test.test('test with a missing web page', test => {
   return makeRequest('http', ipAddress, unsecurePort, '/missing')
   .then(result => {
     const timings = result.timings
@@ -244,70 +248,74 @@ test.test('test with a missing web page', function (test) {
   .then(test.end)
 })
 
-test.test('test with an unreachable host', function (test) {
+test.test('test with an unreachable host', test => {
   return makeRequest('http', '127.0.0.2', 80)
   .then(test.fail)
   .catch(error => {
     test.ok(error instanceof Error)
     test.equal(error.code, 'ECONNREFUSED')
   })
+  .catch(test.threw)
   .then(test.end)
 })
 
-test.test('test with an invalid URL', function (test) {
+test.test('test with an invalid URL', test => {
   return makeRequest('dummy', ipAddress, 1)
   .then(test.fail)
   .catch(error => {
     test.ok(error instanceof Error)
     test.ok(error.message.indexOf('dummy:') > 0)
   })
+  .catch(test.threw)
   .then(test.end)
 })
 
-test.test('test with custom headers', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+test.test('test with custom headers', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
     TestHeader: 'Test value'
   })
   .then(result => {
-    test.ok(lastHeaders)
-    test.equal(Object.keys(lastHeaders).length, 3)
-    test.equal(lastHeaders.connection, 'close')
-    test.equal(lastHeaders.host, '127.0.0.1:8899')
-    test.equal(lastHeaders.testheader, 'Test value')
+    const headers = lastRequest.headers
+    test.ok(headers)
+    test.equal(Object.keys(headers).length, 3)
+    test.equal(headers.connection, 'close')
+    test.equal(headers.host, '127.0.0.1:8899')
+    test.equal(headers.testheader, 'Test value')
   })
   .catch(test.threw)
   .then(test.end)
 })
 
-test.test('test with credentials', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+test.test('test with credentials', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
     username: 'guest',
     password: 'secret'
   })
   .then(result => {
-    test.ok(lastHeaders)
-    test.equal(Object.keys(lastHeaders).length, 3)
-    test.equal(lastHeaders.connection, 'close')
-    test.equal(lastHeaders.host, '127.0.0.1:8899')
-    test.equal(lastHeaders.authorization, 'Basic Z3Vlc3Q6c2VjcmV0')
+    const headers = lastRequest.headers
+    test.ok(headers)
+    test.equal(Object.keys(headers).length, 3)
+    test.equal(headers.connection, 'close')
+    test.equal(headers.host, '127.0.0.1:8899')
+    test.equal(headers.authorization, 'Basic Z3Vlc3Q6c2VjcmV0')
   })
   .catch(test.threw)
   .then(test.end)
 })
 
-test.test('test with the HEAD verb', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+test.test('test with the HEAD verb', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
     method: 'HEAD'
   })
   .then(result => {
-    test.equal(lastMethod, 'HEAD')
+    test.equal(lastRequest.method, 'HEAD')
   })
   .catch(test.threw)
   .then(test.end)
 })
 
-test.test('test returning of received data', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+test.test('test returning of received data', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
     returnResponse: true
   })
   .then(result => {
@@ -320,8 +328,8 @@ test.test('test returning of received data', function (test) {
   .then(test.end)
 })
 
-test.test('test returning of received data with headers', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+test.test('test returning of received data with headers', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
     returnResponse: true,
     includeHeaders: true
   })
@@ -337,8 +345,8 @@ test.test('test returning of received data with headers', function (test) {
   .then(test.end)
 })
 
-test.test('test writing an output file', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+test.test('test writing an output file', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
     outputFile: 'test.out'
   })
   .then(result => {
@@ -351,8 +359,8 @@ test.test('test writing an output file', function (test) {
   .then(test.end)
 })
 
-test.test('test writing an output file with headers', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+test.test('test writing an output file with headers', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
     outputFile: 'test.out',
     includeHeaders: true
   })
@@ -366,20 +374,32 @@ test.test('test writing an output file with headers', function (test) {
   .then(test.end)
 })
 
-test.test('test posting data', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/upload', {
-    data: 'test=ok'
+test.test('test writing an invalid output file', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+    outputFile: '/'
   })
-  .then(result => {
-    test.equal(lastMethod, 'POST')
-    test.equal(lastData, 'test=ok')
+  .then(error => {
+    test.equal(process.exitCode, 2)
+    process.exitCode = 0
   })
   .catch(test.threw)
   .then(test.end)
 })
 
-test.test('test HTTP 1.0', function (test) {
-  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+test.test('test posting data', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/upload', {
+    data: 'test=ok'
+  })
+  .then(result => {
+    test.equal(lastRequest.method, 'POST')
+    test.equal(lastRequest.data, 'test=ok')
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test HTTP 1.0', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
     httpVersion: '1.0'
   })
   .catch(test.threw)
@@ -387,8 +407,21 @@ test.test('test HTTP 1.0', function (test) {
 })
 
 if (http2) {
-  test.test('test HTTP 2.0', function (test) {
-    return makeRequest('https', ipAddress, http2Port, '/data', {
+  test.test('test HTTP 2.0 with the http scheme', test => {
+    return makeRequest('http', ipAddress, http2Port, '/download', {
+      httpVersion: '2.0'
+    })
+    .then(test.fail)
+    .catch(error => {
+      test.ok(error instanceof Error)
+      test.equal(error.code, 'ERR_INSECURE_SCHEME')
+    })
+    .catch(test.threw)
+    .then(test.end)
+  })
+
+  test.test('test HTTP 2.0 with the https scheme', test => {
+    return makeRequest('https', ipAddress, http2Port, '/download', {
       httpVersion: '2.0'
     })
     .catch(test.threw)
@@ -396,19 +429,19 @@ if (http2) {
   })
 }
 
-test.test('stop testing servers', function (test) {
+test.test('stop testing servers', test => {
   stopServers()
   test.end()
 })
 
-test.test('test getting duration', function (test) {
+test.test('test getting duration', test => {
   test.deepEqual(nettime.getDuration([0, 100], [0, 200]), [0, 100])
   test.deepEqual(nettime.getDuration([0, 100], [1, 200]), [1, 100])
   test.deepEqual(nettime.getDuration([0, 200], [1, 100]), [0, 999999900])
   test.end()
 })
 
-test.test('test getting milliseconds', function (test) {
+test.test('test getting milliseconds', test => {
   test.deepEqual(nettime.getMilliseconds([0, 1e6]), 1)
   test.deepEqual(nettime.getMilliseconds([1, 1000]), 1000.001)
   test.end()
