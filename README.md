@@ -42,6 +42,8 @@ Usage: nettime [options] <URL>
 Options:
 
   -V, --version             output the version number
+  -0, --http1.0             use HTTP 1.0
+      --http1.1             use HTTP 1.1
   -d, --data <data>         data to be sent using the POST verb
   -f, --format <format>     set output format: text, json
   -H, --header <header>     send specific HTTP header
@@ -55,7 +57,7 @@ Options:
   -h, --help                output usage information
 
 The default output format is "text" and time unit "ms". Other options
-are compatible with [curl]. Timings are printed to the standard output.
+are compatible with curl. Timings are printed to the standard output.
 ```
 
 ## Programmatic usage
@@ -72,8 +74,7 @@ nettime('https://www.google.com').then(result => {
   if (result.statusCode === 200) {
     let timings = result.timings
     let waiting = nettime.getDuration([0, 0], timings.firstByte)
-    let downloading = nettime.getDuration(timings.firstByte,
-          timings.contentTransfer)
+    let downloading = nettime.getDuration(timings.firstByte, timings.contentTransfer)
     console.log('Waiting for the response:', nettime.getMilliseconds(waiting) + 'ms')
     console.log('Downloading the content:', nettime.getMilliseconds(downloading) + 'ms')
   }
@@ -90,10 +91,12 @@ The input object can contain:
 * `credentials`: object with `username` and `password` string properties to be used for formatting of the Basic Authentication HTTP header.
 * `data`: string or Buffer to send to the server using the HTTP verb `POST` and the content type `application/x-www-form-urlencoded` by default.
 * `headers`: object with header names as string keys and header values as string values.
+* `httpVersion`: string with the protocol version ('1.0' or '1.1') to be sent to the server. (Node.js HTTP support is hard-coded for 1.1. There can be a difference on the server side only.)
+* `includeHeaders`: boolean for including property `headers` (`Object`) with response headers in the promised result object. It does not work alone; it extends the output of `returnResponse` or `outputFile`.
 * `method`: HTTP verb to use in the HTTP request; `GET` is the default, unless `-i` or `-d` options are not set.
 * `outputFile`: file path to write the received data to.
 * `rejectUnauthorized`: boolean to refuse finishing the HTTPS request, is set to `true` (the default), if validation of the web site certificate fails; setting it to `false` makes the request ignore certificate errors.
-* `returnResponse`: includes property `response` (`Buffer`) with the received data in the promised result object.
+* `returnResponse`: boolean for including property `response` (`Buffer`) with the received data in the promised result object.
 
 The result object contains:
 

@@ -11,7 +11,7 @@ const ipAddress = '127.0.0.1'
 const unsecurePort = 8899
 const securePort = 9988
 const servers = []
-let lastHeaders, lastMethod, lastData
+let lastHeaders, lastMethod, lastData, lastVersion
 
 function createServer (protocol, port, options) {
   return new Promise((resolve, reject) => {
@@ -47,6 +47,7 @@ function serve (request, response) {
 
     lastHeaders = request.headers
     lastMethod = request.method
+    lastVersion = request.httpVersion
     if (upload) {
       lastData = ''
       request.on('data', function (data) {
@@ -78,8 +79,9 @@ function makeRequest (protocol, host, port, path, options) {
   const https = protocol === 'https'
   const url = protocol + '://' + host + ':' + port + (path || '')
   let credentials, headers, method, outputFile, returnResponse
-  let includeHeaders, data
+  let includeHeaders, data, httpVersion
   if (options) {
+    httpVersion = options.httpVersion
     if (options.username) {
       credentials = options
     } else if (options.method) {
@@ -101,6 +103,7 @@ function makeRequest (protocol, host, port, path, options) {
     credentials: credentials,
     data: data,
     headers: headers,
+    httpVersion: httpVersion,
     includeHeaders: includeHeaders,
     method: method,
     outputFile: outputFile,
@@ -350,6 +353,17 @@ test.test('test posting data', function (test) {
   .then(result => {
     test.equal(lastMethod, 'POST')
     test.equal(lastData, 'test=ok')
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test HTTP 1.0', function (test) {
+  return makeRequest('http', ipAddress, unsecurePort, '/data', {
+    httpVersion: '1.0'
+  })
+  .then(result => {
+    test.equal(lastVersion, '1.0')
   })
   .catch(test.threw)
   .then(test.end)
