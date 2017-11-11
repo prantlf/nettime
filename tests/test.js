@@ -52,7 +52,7 @@ function serve (request, response) {
         data: data,
         headers: request.headers,
         httpVersion: request.httpVersion,
-        method: request.method,
+        method: request.method
       }
       response.writeHead(ok ? 200 : url === '/' ? 204 : 404, {
         test: 'ok'
@@ -109,6 +109,8 @@ function makeRequest (protocol, host, port, path, options) {
     } else if (options.returnResponse) {
       returnResponse = true
       includeHeaders = options.includeHeaders
+    } else if (options.includeHeaders) {
+      includeHeaders = options.includeHeaders
     } else if (options.data) {
       data = options.data
     } else if (options.httpVersion) {
@@ -146,9 +148,9 @@ function checkRequest (options, result) {
   test.equal(typeof result, 'object')
   if (options.returnResponse) {
     ++resultCount
-    if (options.includeHeaders) {
-      ++resultCount
-    }
+  }
+  if (options.includeHeaders) {
+    ++resultCount
   }
   test.equal(Object.keys(result).length, resultCount)
   if (httpVersion === '1.0') {
@@ -342,6 +344,20 @@ test.test('test returning of received data with headers', test => {
     test.equal(headers.test, 'ok')
     test.ok(response)
     test.equal(response.length, 4)
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test returning of received headers alone', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+    includeHeaders: true
+  })
+  .then(result => {
+    const headers = result.headers
+    test.ok(headers)
+    test.equal(headers.test, 'ok')
+    test.ok(!result.response)
   })
   .catch(test.threw)
   .then(test.end)

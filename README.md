@@ -48,8 +48,8 @@ Options:
   -d, --data <data>         data to be sent using the POST verb
   -f, --format <format>     set output format: text, json
   -H, --header <header>     send specific HTTP header
-  -i, --include             include response headers in the output file
-  -I, --head                use HEAD verb to show document info only
+  -i, --include             include response headers in the output
+  -I, --head                use HEAD verb to get document info only
   -k, --insecure            ignore certificate errors
   -o, --output <file>       write the received data to a file
   -t, --time-unit <unit>    set time unit: ms, s+ns
@@ -94,7 +94,7 @@ The input object can contain:
 * `failOnOutputFileError`: boolean for preventing the request timing operation from failing, if writing to the output file failed. If set to `false`, the error will be printed on the standard output and the process exit code will be set to 2. It is in effect only if `outputFile` is specified. The default is `true`.
 * `headers`: object with header names as string keys and header values as string values.
 * `httpVersion`: string with the protocol version ('1.0', '1.1' or '2.0') to be sent to the server. (Node.js HTTP support is hard-coded for 1.1. There can be a difference between 1.0 and 1.1 on the server side only. Node.js supports HTTP/2 in the version 8.4.0 or newer with the --expose-http2 command-lime option and in the version 8.8.1 or newer out-of-the-box. Alternatively, you can install a "http2" module as a polyfill.)
-* `includeHeaders`: boolean for including property `headers` (`Object`) with response headers in the promised result object. It does not work alone; it extends the output of `returnResponse` or `outputFile`.
+* `includeHeaders`: boolean for including property `headers` (`Object`) with response headers in the promised result object. If `outputFile` is specified, the headers are written to the beginning of the output file too.
 * `method`: HTTP verb to use in the HTTP request; `GET` is the default, unless `-i` or `-d` options are not set.
 * `outputFile`: file path to write the received data to.
 * `rejectUnauthorized`: boolean to refuse finishing the HTTPS request, is set to `true` (the default), if validation of the web site certificate fails; setting it to `false` makes the request ignore certificate errors.
