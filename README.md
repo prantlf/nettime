@@ -139,6 +139,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* 2017-11-11   v1.1.0   Support HTTP/2 requests
 * 2017-11-06   v1.0.0   Make command-line options compatible with [curl]
 * 2017-11-06   v0.5.0   Add support for the [curl] options "iIXdo"
 * 2017-11-06   v0.4.0   Support custom headers and Basic Authentication
