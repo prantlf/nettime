@@ -2,6 +2,12 @@
 
 const fs = require('fs')
 const http = require('http')
+let http2
+try {
+  http2 = require('http2')
+} catch (error) {
+  console.warn('Skipping HTTP 2 tests:', error.message)
+}
 const https = require('https')
 const nettime = require('..')
 const path = require('path')
@@ -10,19 +16,23 @@ const test = require('tap')
 const ipAddress = '127.0.0.1'
 const unsecurePort = 8899
 const securePort = 9988
+const http2Port = 9898
 const servers = []
 let lastHeaders, lastMethod, lastData, lastVersion
 
 function createServer (protocol, port, options) {
-  return new Promise((resolve, reject) => {
-    const server = options ? protocol.createServer(options, serve)
-                           : protocol.createServer(serve)
-    server.on('error', reject)
-          .listen(port, ipAddress, () => {
-            servers.push(server)
-            resolve()
-          })
-  })
+  if (protocol) {
+    return new Promise((resolve, reject) => {
+      const server = options ? (protocol.createSecureServer ||
+                                protocol.createServer)(options, serve)
+                             : protocol.createServer(serve)
+      server.on('error', reject)
+            .listen(port, ipAddress, () => {
+              servers.push(server)
+              resolve()
+            })
+    })
+  }
 }
 
 function readCertificate (name) {
@@ -33,7 +43,8 @@ function serve (request, response) {
   setTimeout(() => {
     const url = request.url
     const upload = url === '/upload'
-    const statusCode = url === '/' ? 204 : url === '/data' || upload ? 200 : 404
+    const statusCode = url === '/' ? 204
+                                   : url === '/data' || upload ? 200 : 404
 
     function sendResponse () {
       response.writeHead(statusCode, {
@@ -61,11 +72,13 @@ function serve (request, response) {
 }
 
 function startServers () {
+  const secureOptions = {
+    key: readCertificate('key'),
+    cert: readCertificate('cert')
+  }
   return createServer(http, unsecurePort)
-    .then(createServer.bind(null, https, securePort, {
-      key: readCertificate('key'),
-      cert: readCertificate('cert')
-    }))
+    .then(createServer.bind(null, https, securePort, secureOptions))
+    .then(createServer.bind(null, http2, http2Port, secureOptions))
 }
 
 function stopServers () {
@@ -81,7 +94,6 @@ function makeRequest (protocol, host, port, path, options) {
   let credentials, headers, method, outputFile, returnResponse
   let includeHeaders, data, httpVersion
   if (options) {
-    httpVersion = options.httpVersion
     if (options.username) {
       credentials = options
     } else if (options.method) {
@@ -94,6 +106,8 @@ function makeRequest (protocol, host, port, path, options) {
       includeHeaders = options.includeHeaders
     } else if (options.data) {
       data = options.data
+    } else if (options.httpVersion) {
+      httpVersion = options.httpVersion
     } else {
       headers = options
     }
@@ -111,12 +125,14 @@ function makeRequest (protocol, host, port, path, options) {
     returnResponse: returnResponse
   } : url)
   .then(checkRequest.bind(null, {
+    httpVersion: httpVersion,
     returnResponse: returnResponse,
     includeHeaders: includeHeaders
   }))
 }
 
 function checkRequest (options, result) {
+  const httpVersion = options.httpVersion || '1.1'
   const timings = result.timings
   const tcpConnection = timings.tcpConnection
   const firstByte = timings.firstByte
@@ -129,7 +145,11 @@ function checkRequest (options, result) {
     }
   }
   test.equal(Object.keys(result).length, resultCount)
-  test.equal(result.httpVersion, '1.1')
+  if (httpVersion === '1.0') {
+    result.httpVersion = '1.0'
+  }
+  test.equal(result.httpVersion, httpVersion)
+  test.equal(lastVersion, httpVersion)
   test.equal(typeof timings, 'object')
   checkTiming(timings.socketOpen)
   checkTiming(tcpConnection)
@@ -362,12 +382,19 @@ test.test('test HTTP 1.0', function (test) {
   return makeRequest('http', ipAddress, unsecurePort, '/data', {
     httpVersion: '1.0'
   })
-  .then(result => {
-    test.equal(lastVersion, '1.0')
-  })
   .catch(test.threw)
   .then(test.end)
 })
+
+if (http2) {
+  test.test('test HTTP 2.0', function (test) {
+    return makeRequest('https', ipAddress, http2Port, '/data', {
+      httpVersion: '2.0'
+    })
+    .catch(test.threw)
+    .then(test.end)
+  })
+}
 
 test.test('stop testing servers', function (test) {
   stopServers()

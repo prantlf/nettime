@@ -17,7 +17,8 @@ commander.version(pkg.version)
          .description(pkg.description)
          .usage('[options] <URL>')
          .option('-0, --http1.0', 'use HTTP 1.0')
-         .option('--http1.1', 'use HTTP 1.1')
+         .option('--http1.1', 'use HTTP 1.1 (default)')
+         .option('--http2', 'use HTTP 2')
          .option('-d, --data <data>', 'data to be sent using the POST verb')
          .option('-f, --format <format>', 'set output format: text, json')
          .option('-H, --header <header>', 'send specific HTTP header', collect, [])
@@ -79,7 +80,7 @@ nettime({
   credentials: credentials,
   data: commander.data,
   headers: headers,
-  httpVersion: commander['http1.0'] ? '1.0' : '1.1',
+  httpVersion: commander['http2'] ? '2.0' : commander['http1.0'] ? '1.0' : '1.1',
   includeHeaders: commander.include,
   method: commander.request || (commander.head ? 'HEAD'
     : commander.data ? 'POST' : 'GET'),

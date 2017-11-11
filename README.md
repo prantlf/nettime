@@ -43,7 +43,8 @@ Options:
 
   -V, --version             output the version number
   -0, --http1.0             use HTTP 1.0
-      --http1.1             use HTTP 1.1
+      --http1.1             use HTTP 1.1 (default)
+      --http2               use HTTP 2.0
   -d, --data <data>         data to be sent using the POST verb
   -f, --format <format>     set output format: text, json
   -H, --header <header>     send specific HTTP header
@@ -91,7 +92,7 @@ The input object can contain:
 * `credentials`: object with `username` and `password` string properties to be used for formatting of the Basic Authentication HTTP header.
 * `data`: string or Buffer to send to the server using the HTTP verb `POST` and the content type `application/x-www-form-urlencoded` by default.
 * `headers`: object with header names as string keys and header values as string values.
-* `httpVersion`: string with the protocol version ('1.0' or '1.1') to be sent to the server. (Node.js HTTP support is hard-coded for 1.1. There can be a difference on the server side only.)
+* `httpVersion`: string with the protocol version ('1.0', '1.1' or '2.0') to be sent to the server. (Node.js HTTP support is hard-coded for 1.1. There can be a difference between 1.0 and 1.1 on the server side only. Node.js supports HTTP/2 in the version 8.4.0 or newer with the --expose-http2 command-lime option and in the version 8.8.1 or newer out-of-the-box. Alternatively, you can install a "http2" module as a polyfill.)
 * `includeHeaders`: boolean for including property `headers` (`Object`) with response headers in the promised result object. It does not work alone; it extends the output of `returnResponse` or `outputFile`.
 * `method`: HTTP verb to use in the HTTP request; `GET` is the default, unless `-i` or `-d` options are not set.
 * `outputFile`: file path to write the received data to.
