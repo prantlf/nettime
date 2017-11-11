@@ -79,6 +79,7 @@ nettime({
   url: url,
   credentials: credentials,
   data: commander.data,
+  failOnOutputFileError: false,
   headers: headers,
   httpVersion: commander['http2'] ? '2.0' : commander['http1.0'] ? '1.0' : '1.1',
   includeHeaders: commander.include,

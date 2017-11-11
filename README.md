@@ -91,6 +91,7 @@ The input object can contain:
 * `url`: string with a URL to make the request with.
 * `credentials`: object with `username` and `password` string properties to be used for formatting of the Basic Authentication HTTP header.
 * `data`: string or Buffer to send to the server using the HTTP verb `POST` and the content type `application/x-www-form-urlencoded` by default.
+* `failOnOutputFileError`: boolean for preventing the request timing operation from failing, if writing to the output file failed. If set to `false`, the error will be printed on the standard output and the process exit code will be set to 2. It is in effect only if `outputFile` is specified. The default is `true`.
 * `headers`: object with header names as string keys and header values as string values.
 * `httpVersion`: string with the protocol version ('1.0', '1.1' or '2.0') to be sent to the server. (Node.js HTTP support is hard-coded for 1.1. There can be a difference between 1.0 and 1.1 on the server side only. Node.js supports HTTP/2 in the version 8.4.0 or newer with the --expose-http2 command-lime option and in the version 8.8.1 or newer out-of-the-box. Alternatively, you can install a "http2" module as a polyfill.)
 * `includeHeaders`: boolean for including property `headers` (`Object`) with response headers in the promised result object. It does not work alone; it extends the output of `returnResponse` or `outputFile`.

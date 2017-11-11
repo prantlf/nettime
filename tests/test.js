@@ -95,8 +95,8 @@ function stopServers () {
 function makeRequest (protocol, host, port, path, options) {
   const https = protocol === 'https'
   const url = protocol + '://' + host + ':' + port + (path || '')
-  let credentials, headers, method, outputFile, returnResponse
-  let includeHeaders, data, httpVersion
+  let credentials, headers, method, outputFile, failOnOutputFileError
+  let returnResponse, includeHeaders, data, httpVersion
   if (options) {
     if (options.username) {
       credentials = options
@@ -105,6 +105,7 @@ function makeRequest (protocol, host, port, path, options) {
     } else if (options.outputFile) {
       outputFile = options.outputFile
       includeHeaders = options.includeHeaders
+      failOnOutputFileError = options.failOnOutputFileError
     } else if (options.returnResponse) {
       returnResponse = true
       includeHeaders = options.includeHeaders
@@ -120,6 +121,7 @@ function makeRequest (protocol, host, port, path, options) {
     url: url,
     credentials: credentials,
     data: data,
+    failOnOutputFileError: failOnOutputFileError,
     headers: headers,
     httpVersion: httpVersion,
     includeHeaders: includeHeaders,
@@ -374,11 +376,25 @@ test.test('test writing an output file with headers', test => {
   .then(test.end)
 })
 
-test.test('test writing an invalid output file', test => {
+test.test('test failure when writing to an output file', test => {
   return makeRequest('http', ipAddress, unsecurePort, '/download', {
     outputFile: '/'
   })
-  .then(error => {
+  .then(test.fail)
+  .catch(error => {
+    test.ok(error instanceof Error)
+    test.equal(error.code, 'EISDIR')
+  })
+  .catch(test.threw)
+  .then(test.end)
+})
+
+test.test('test an ignored failure when writing to an output file', test => {
+  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+    outputFile: '/',
+    failOnOutputFileError: false
+  })
+  .then(() => {
     test.equal(process.exitCode, 2)
     process.exitCode = 0
   })
