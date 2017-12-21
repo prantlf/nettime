@@ -39,10 +39,10 @@
     "codeclimate:download": "curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && chmod +x ./cc-test-reporter",
     "codeclimate:execute": "CC_TEST_REPORTER_ID=261ca831f78e96f538d8f77ed64b9835b040ed666fe54dd136b6e6c466a55e35 ./cc-test-reporter before-build && cat coverage/lcov.info | CC_TEST_REPORTER_ID=261ca831f78e96f538d8f77ed64b9835b040ed666fe54dd136b6e6c466a55e35 ./cc-test-reporter after-build",
     "coverage": "test `node --version | cut -c 2` -eq 8 && npm run coveralls && npm run codacy && npm run codecov && npm run codeclimate:download && npm run codeclimate:execute",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+    "semantic-release": "semantic-release"
   },
   "dependencies": {
-    "commander": "^2.11.0",
+    "commander": "^2.12.2",
     "readline-sync": "^1.4.7",
     "safe-buffer": "^5.1.1",
     "sprintf-js": "^1.1.1"
