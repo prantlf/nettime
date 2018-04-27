@@ -16,7 +16,7 @@ The programmatic interface did not change and has remained compatible.
 
 ## Command-line usage
 
-Make sure that you have [NodeJS] >= 4 installed. Install the `nettime` package globally and print timings of a sample web site:
+Make sure that you have [NodeJS] >= 6 installed. Install the `nettime` package globally and print timings of a sample web site:
 
 ```bash
 $ npm install -g nettime
@@ -63,7 +63,7 @@ are compatible with curl. Timings are printed to the standard output.
 
 ## Programmatic usage
 
-Make sure that you use [NodeJS] >= 4. Install the `nettime` package locally and get time duration of waiting for the response and downloading the content of a sample web page:
+Make sure that you use [NodeJS] >= 6. Install the `nettime` package locally and get time duration of waiting for the response and downloading the content of a sample web page:
 
 ```bash
 npm install --save nettime
@@ -139,6 +139,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* 2018-04-27   v2.0.0   Dropped support of Node.js 4
 * 2018-03-16   v1.1.2   Upgrade package dependencies
 * 2017-12-21   v1.1.1   Upgrade semantic release and other dependencies
 * 2017-11-11   v1.1.0   Support HTTP/2 requests
