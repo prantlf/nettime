@@ -4,6 +4,8 @@
 
 Prints time duration of various stages of a HTTP/S request, like DNS lookup, TLS handshake, Time to First Byte etc. Similarly to the [time] command, which measures process timings, the `nettime` command measures HTTP/S request timings.  You can find more information in [Understanding & Measuring HTTP Timings with Node.js](https://blog.risingstack.com/measuring-http-timings-node-js/).
 
+**Warning: The `nettime` script does not work in Node.js 10.0.** It appears to trigger some unexpected problem inside the network implementation. The network request is finished, but the process is exited immediately without letting even the debugger inspect it
+
 **Attention**: Command-line options changed between 0.x and 1.x versions, so that they become compatible with [curl]. If you use the `nettime` command-line tool, check the affected options:
 
 ```text
