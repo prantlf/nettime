@@ -4,7 +4,7 @@
 
 Prints time duration of various stages of a HTTP/S request, like DNS lookup, TLS handshake, Time to First Byte etc. Similarly to the [time] command, which measures process timings, the `nettime` command measures HTTP/S request timings.  You can find more information in [Understanding & Measuring HTTP Timings with Node.js](https://blog.risingstack.com/measuring-http-timings-node-js/).
 
-**Warning: The `nettime` script does not work in Node.js 10.0.** It appears to trigger some unexpected problem inside the network implementation. The network request is finished, but the process is exited immediately without letting even the debugger inspect it
+**Warning: The `nettime` script does not work in Node.js 10.0.** It appears to trigger some unexpected problem inside the network implementation. The network request is finished, but the process is exited immediately without letting even the debugger inspect it. I adapted the code for breaking the "close" event on the socket between Node.js 8.11.1 and 8.11.2, when HTTP/2 is used, but I'm still looking at the problem in Node.js 10, where no HTTP version works.
 
 **Attention**: Command-line options changed between 0.x and 1.x versions, so that they become compatible with [curl]. If you use the `nettime` command-line tool, check the affected options:
 
@@ -141,7 +141,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
-* 2018-05-19   v2.0.1   Fixed http2 connection for Node.js 8.11.2 and 10
+* 2018-05-19   v2.0.1   Fixed http2 connection for Node.js 8.11.2
 * 2018-04-27   v2.0.0   Dropped support of Node.js 4
 * 2018-03-16   v1.1.2   Upgrade package dependencies
 * 2017-12-21   v1.1.1   Upgrade semantic release and other dependencies
