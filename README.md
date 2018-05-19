@@ -141,6 +141,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* 2018-05-19   v2.0.1   Fixed http2 connection for Node.js 8.11.2 and 10
 * 2018-04-27   v2.0.0   Dropped support of Node.js 4
 * 2018-03-16   v1.1.2   Upgrade package dependencies
 * 2017-12-21   v1.1.1   Upgrade semantic release and other dependencies
