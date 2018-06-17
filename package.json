@@ -52,7 +52,7 @@
     "codacy-coverage": "^3.0.0",
     "codecov": "^3.0.2",
     "coveralls": "^3.0.1",
-    "semantic-release": "^15.4.1",
+    "semantic-release": "^15.5.4",
     "standard": "^11.0.1",
     "tap": "^12.0.1",
     "travis-deploy-once": "^5.0.0"
