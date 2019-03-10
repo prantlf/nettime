@@ -54,21 +54,22 @@ Usage: nettime [options] <URL>
 
 Options:
 
-  -V, --version             output the version number
-  -0, --http1.0             use HTTP 1.0
-      --http1.1             use HTTP 1.1 (default)
-      --http2               use HTTP 2.0
-  -d, --data <data>         data to be sent using the POST verb
-  -f, --format <format>     set output format: text, json
-  -H, --header <header>     send specific HTTP header
-  -i, --include             include response headers in the output
-  -I, --head                use HEAD verb to get document info only
-  -k, --insecure            ignore certificate errors
-  -o, --output <file>       write the received data to a file
-  -t, --time-unit <unit>    set time unit: ms, s+ns
-  -u, --user <credentials>  credentials for Basic Authentication
-  -X, --request <verb>      specify HTTP verb to use for the request
-  -h, --help                output usage information
+  -V, --version               output the version number
+  -0, --http1.0               use HTTP 1.0
+      --http1.1               use HTTP 1.1 (default)
+      --http2                 use HTTP 2.0
+  -c, --connect-timeout <ms>  maximum time to wait for a connection
+  -d, --data <data>           data to be sent using the POST verb
+  -f, --format <format>       set output format: text, json
+  -H, --header <header>       send specific HTTP header
+  -i, --include               include response headers in the output
+  -I, --head                  use HEAD verb to get document info only
+  -k, --insecure              ignore certificate errors
+  -o, --output <file>         write the received data to a file
+  -t, --time-unit <unit>      set time unit: ms, s+ns
+  -u, --user <credentials>    credentials for Basic Authentication
+  -X, --request <verb>        specify HTTP verb to use for the request
+  -h, --help                  output usage information
 
 The default output format is "text" and time unit "ms". Other options
 are compatible with curl. Timings are printed to the standard output.
@@ -152,6 +153,7 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* 2019-03-10   v2.1.0   Added option for setting connection timeout
 * 2018-05-19   v2.0.1   Fixed http2 connection for Node.js 8.11.2
 * 2018-04-27   v2.0.0   Dropped support of Node.js 4
 * 2018-03-16   v1.1.2   Upgrade package dependencies

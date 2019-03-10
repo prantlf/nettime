@@ -96,7 +96,7 @@ function makeRequest (protocol, host, port, path, options) {
   const https = protocol === 'https'
   const url = protocol + '://' + host + ':' + port + (path || '')
   let credentials, headers, method, outputFile, failOnOutputFileError
-  let returnResponse, includeHeaders, data, httpVersion
+  let returnResponse, includeHeaders, data, httpVersion, timeout
   if (options) {
     if (options.username) {
       credentials = options
@@ -115,6 +115,8 @@ function makeRequest (protocol, host, port, path, options) {
       data = options.data
     } else if (options.httpVersion) {
       httpVersion = options.httpVersion
+    } else if (options.timeout) {
+      timeout = options.timeout
     } else {
       headers = options
     }
@@ -130,7 +132,8 @@ function makeRequest (protocol, host, port, path, options) {
     method: method,
     outputFile: outputFile,
     rejectUnauthorized: false,
-    returnResponse: returnResponse
+    returnResponse: returnResponse,
+    timeout: timeout
   } : url)
     .then(checkRequest.bind(null, {
       httpVersion: httpVersion,
@@ -252,12 +255,14 @@ test.test('test with a missing web page', test => {
     .then(test.end)
 })
 
-test.test('test with an unreachable host', test => {
-  return makeRequest('http', '127.0.0.0', 80)
+test.test('test timed out connection to an unreachable host', test => {
+  return makeRequest('http', '192.0.2.1', 80, '/', {
+    timeout: 10
+  })
     .then(test.fail)
     .catch(error => {
       test.ok(error instanceof Error)
-      test.equal(error.code, 'ENETUNREACH')
+      test.equal(error.code, 'ETIMEDOUT')
     })
     .catch(test.threw)
     .then(test.end)
@@ -278,7 +283,7 @@ test.test('test with custom headers', test => {
   return makeRequest('http', ipAddress, unsecurePort, '/download', {
     TestHeader: 'Test value'
   })
-    .then(result => {
+    .then(() => {
       const headers = lastRequest.headers
       test.ok(headers)
       test.equal(Object.keys(headers).length, 3)
