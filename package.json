@@ -38,24 +38,20 @@
     "codecov": "CODECOV_TOKEN=81a735c5-c3a1-4ef8-932a-95470240ce26 codecov",
     "codeclimate:download": "curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && chmod +x ./cc-test-reporter",
     "codeclimate:execute": "CC_TEST_REPORTER_ID=261ca831f78e96f538d8f77ed64b9835b040ed666fe54dd136b6e6c466a55e35 ./cc-test-reporter before-build && cat coverage/lcov.info | CC_TEST_REPORTER_ID=261ca831f78e96f538d8f77ed64b9835b040ed666fe54dd136b6e6c466a55e35 ./cc-test-reporter after-build",
-    "coverage": "test `node --version | cut -c 2` -eq 8 && npm run coveralls && npm run codacy && npm run codecov && npm run codeclimate:download && npm run codeclimate:execute",
-    "semantic-release": "semantic-release",
-    "travis-deploy-once": "travis-deploy-once"
+    "coverage": "test `node --version | cut -c 2,3` -eq 10 && npm run coveralls && npm run codacy && npm run codecov && npm run codeclimate:download && npm run codeclimate:execute"
   },
   "dependencies": {
-    "commander": "^2.18.0",
+    "commander": "^2.19.0",
     "readline-sync": "^1.4.9",
     "safe-buffer": "^5.1.2",
-    "sprintf-js": "^1.1.1"
+    "sprintf-js": "^1.1.2"
   },
   "devDependencies": {
-    "codacy-coverage": "^3.0.0",
-    "codecov": "^3.1.0",
-    "coveralls": "^3.0.2",
-    "semantic-release": "^15.9.14",
+    "codacy-coverage": "^3.4.0",
+    "codecov": "^3.2.0",
+    "coveralls": "^3.0.3",
     "standard": "^12.0.1",
-    "tap": "^12.0.1",
-    "travis-deploy-once": "^5.0.7"
+    "tap": "^12.6.0"
   },
   "keywords": [
     "nettime",
