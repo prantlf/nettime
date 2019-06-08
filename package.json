@@ -41,17 +41,17 @@
     "coverage": "test `node --version | cut -c 2` -eq 8 && npm run coveralls && npm run codacy && npm run codecov && npm run codeclimate:download && npm run codeclimate:execute"
   },
   "dependencies": {
-    "commander": "^2.19.0",
+    "commander": "^2.20.0",
     "readline-sync": "^1.4.9",
     "safe-buffer": "^5.1.2",
     "sprintf-js": "^1.1.2"
   },
   "devDependencies": {
     "codacy-coverage": "^3.4.0",
-    "codecov": "^3.2.0",
-    "coveralls": "^3.0.3",
+    "codecov": "^3.5.0",
+    "coveralls": "^3.0.4",
     "standard": "^12.0.1",
-    "tap": "^12.6.0"
+    "tap": "^14.2.2"
   },
   "keywords": [
     "nettime",
