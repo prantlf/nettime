@@ -1,6 +1,4 @@
-'use strict'
-
-const fs = require('fs')
+const { readFileSync, statSync, unlinkSync } = require('fs')
 const http = require('http')
 let http2
 try {
@@ -9,12 +7,13 @@ try {
   console.warn('Skipping HTTP 2 tests:', error.message)
 }
 const https = require('https')
-const nettime = require('..')
-const path = require('path')
+const { join } = require('path')
 const test = require('tap')
+const nettime = require('..')
+const { getDuration, getMilliseconds } = require('../lib/timings')
 
 const ipAddress = '127.0.0.1'
-const unsecurePort = 8899
+const insecurePort = 8899
 const securePort = 9988
 const http2Port = 9898
 const servers = []
@@ -36,7 +35,7 @@ function createServer (protocol, port, options) {
 }
 
 function readCertificate (name) {
-  return fs.readFileSync(path.join(__dirname, name + '.pem'))
+  return readFileSync(join(__dirname, name + '.pem'))
 }
 
 function serve (request, response) {
@@ -80,7 +79,7 @@ function startServers () {
     key: readCertificate('key'),
     cert: readCertificate('cert')
   }
-  return createServer(http, unsecurePort)
+  return createServer(http, insecurePort)
     .then(createServer.bind(null, https, securePort, secureOptions))
     .then(createServer.bind(null, http2, http2Port, secureOptions))
 }
@@ -167,11 +166,11 @@ function checkRequest (options, result) {
   checkTiming(firstByte)
   checkTiming(timings.contentTransfer)
   checkTiming(timings.socketClose)
-  test.ok(getDuration(tcpConnection, firstByte) >= 1 * 1e6)
+  test.ok(getTestDuration(tcpConnection, firstByte) >= 1 * 1e6)
   return result
 }
 
-function getDuration (start, end) {
+function getTestDuration (start, end) {
   let seconds = end[0] - start[0]
   let nanoseconds = end[1] - start[1]
   if (nanoseconds < 0) {
@@ -200,8 +199,28 @@ test.test('start testing servers', test => {
     .catch(test.threw)
 })
 
+test.test('test a full URL', test => {
+  return makeRequest('http', 'user:pass@localhost', insecurePort, '?search#hash')
+    .then(result => {
+      test.equal(result.statusCode, 404)
+      test.equal(result.statusMessage, 'Not Found')
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
+test.test('test a full URL withotu password', test => {
+  return makeRequest('http', 'user@localhost', insecurePort, '?search#hash')
+    .then(result => {
+      test.equal(result.statusCode, 404)
+      test.equal(result.statusMessage, 'Not Found')
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
 test.test('test with a hostname', test => {
-  return makeRequest('http', 'localhost', unsecurePort)
+  return makeRequest('http', 'localhost', insecurePort)
     .then(result => {
       const timings = result.timings
       test.equal(result.statusCode, 204)
@@ -215,7 +234,7 @@ test.test('test with a hostname', test => {
 })
 
 test.test('test with an IP address', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download')
+  return makeRequest('http', ipAddress, insecurePort, '/download')
     .then(result => {
       const timings = result.timings
       test.equal(result.statusCode, 200)
@@ -242,7 +261,7 @@ test.test('test with the HTTPS protocol', test => {
 })
 
 test.test('test with a missing web page', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/missing')
+  return makeRequest('http', ipAddress, insecurePort, '/missing')
     .then(result => {
       const timings = result.timings
       test.equal(result.statusCode, 404)
@@ -280,7 +299,7 @@ test.test('test with an invalid URL', test => {
 })
 
 test.test('test with custom headers', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     TestHeader: 'Test value'
   })
     .then(() => {
@@ -296,11 +315,11 @@ test.test('test with custom headers', test => {
 })
 
 test.test('test with credentials', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     username: 'guest',
     password: 'secret'
   })
-    .then(result => {
+    .then(() => {
       const headers = lastRequest.headers
       test.ok(headers)
       test.equal(Object.keys(headers).length, 3)
@@ -313,10 +332,10 @@ test.test('test with credentials', test => {
 })
 
 test.test('test with the HEAD verb', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     method: 'HEAD'
   })
-    .then(result => {
+    .then(() => {
       test.equal(lastRequest.method, 'HEAD')
     })
     .catch(test.threw)
@@ -324,7 +343,7 @@ test.test('test with the HEAD verb', test => {
 })
 
 test.test('test returning of received data', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     returnResponse: true
   })
     .then(result => {
@@ -338,7 +357,7 @@ test.test('test returning of received data', test => {
 })
 
 test.test('test returning of received data with headers', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     returnResponse: true,
     includeHeaders: true
   })
@@ -355,7 +374,7 @@ test.test('test returning of received data with headers', test => {
 })
 
 test.test('test returning of received headers alone', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     includeHeaders: true
   })
     .then(result => {
@@ -369,36 +388,36 @@ test.test('test returning of received headers alone', test => {
 })
 
 test.test('test writing an output file', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     outputFile: 'test.out'
   })
     .then(result => {
-      const stat = fs.statSync('test.out')
+      const stat = statSync('test.out')
       test.ok(stat)
       test.equal(stat.size, 4)
-      fs.unlinkSync('test.out')
+      unlinkSync('test.out')
     })
     .catch(test.threw)
     .then(test.end)
 })
 
 test.test('test writing an output file with headers', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     outputFile: 'test.out',
     includeHeaders: true
   })
-    .then(result => {
-      const stat = fs.statSync('test.out')
+    .then(() => {
+      const stat = statSync('test.out')
       test.ok(stat)
       test.ok(stat.size > 4)
-      fs.unlinkSync('test.out')
+      unlinkSync('test.out')
     })
     .catch(test.threw)
     .then(test.end)
 })
 
 test.test('test failure when writing to an output file', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     outputFile: '/'
   })
     .then(test.fail)
@@ -411,7 +430,7 @@ test.test('test failure when writing to an output file', test => {
 })
 
 test.test('test an ignored failure when writing to an output file', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     outputFile: '/',
     failOnOutputFileError: false
   })
@@ -424,10 +443,10 @@ test.test('test an ignored failure when writing to an output file', test => {
 })
 
 test.test('test posting data', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/upload', {
+  return makeRequest('http', ipAddress, insecurePort, '/upload', {
     data: 'test=ok'
   })
-    .then(result => {
+    .then(() => {
       test.equal(lastRequest.method, 'POST')
       test.equal(lastRequest.data, 'test=ok')
     })
@@ -436,7 +455,7 @@ test.test('test posting data', test => {
 })
 
 test.test('test HTTP 1.0', test => {
-  return makeRequest('http', ipAddress, unsecurePort, '/download', {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
     httpVersion: '1.0'
   })
     .catch(test.threw)
@@ -471,15 +490,8 @@ test.test('stop testing servers', test => {
   test.end()
 })
 
-test.test('test getting duration', test => {
-  test.deepEqual(nettime.getDuration([0, 100], [0, 200]), [0, 100])
-  test.deepEqual(nettime.getDuration([0, 100], [1, 200]), [1, 100])
-  test.deepEqual(nettime.getDuration([0, 200], [1, 100]), [0, 999999900])
-  test.end()
-})
-
-test.test('test getting milliseconds', test => {
-  test.deepEqual(nettime.getMilliseconds([0, 1e6]), 1)
-  test.deepEqual(nettime.getMilliseconds([1, 1000]), 1000.001)
+test.test('test timing methods duration', test => {
+  test.equal(nettime.getDuration, getDuration)
+  test.equal(nettime.getMilliseconds, getMilliseconds)
   test.end()
 })

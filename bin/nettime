@@ -4,7 +4,7 @@
 
 const commander = require('commander')
 const nettime = require('..')
-const pkg = require('../package.json')
+const { version, description } = require('../package.json')
 const print = require('../lib/printer')
 const readlineSync = require('readline-sync')
 
@@ -13,8 +13,9 @@ function collect (value, result) {
   return result
 }
 
-commander.version(pkg.version)
-  .description(pkg.description)
+commander
+  .version(version)
+  .description(description)
   .usage('[options] <URL>')
   .option('-0, --http1.0', 'use HTTP 1.0')
   .option('--http1.1', 'use HTTP 1.1 (default)')
@@ -30,19 +31,18 @@ commander.version(pkg.version)
   .option('-t, --time-unit <unit>', 'set time unit: ms, s+ns')
   .option('-u, --user <credentials>', 'credentials for Basic Authentication')
   .option('-X, --request <verb>', 'specify HTTP verb to use for the request')
+  .on('--help', function () {
+    console.log()
+    console.log('  The default output format is "text" and time unit "ms". Other options')
+    console.log('  are compatible with curl. Timings are printed to the standard output.')
+    console.log()
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ nettime https://www.google.com')
+    console.log('    $ nettime -f json https://www.github.com')
+  })
+  .parse(process.argv)
 
-commander.on('--help', function () {
-  console.log()
-  console.log('  The default output format is "text" and time unit "ms". Other options')
-  console.log('  are compatible with curl. Timings are printed to the standard output.')
-  console.log()
-  console.log('  Examples:')
-  console.log()
-  console.log('    $ nettime https://www.google.com')
-  console.log('    $ nettime -f json https://www.github.com')
-})
-
-commander.parse(process.argv)
 const url = commander.args[0]
 if (!url) {
   commander.help()
@@ -84,8 +84,8 @@ nettime({
   headers: headers,
   httpVersion: commander.http2 ? '2.0' : commander['http1.0'] ? '1.0' : '1.1',
   includeHeaders: commander.include,
-  method: commander.request || (commander.head ? 'HEAD'
-    : commander.data ? 'POST' : 'GET'),
+  method: commander.request ||
+    (commander.head ? 'HEAD' : commander.data ? 'POST' : 'GET'),
   outputFile: commander.output,
   rejectUnauthorized: !commander.insecure,
   timeout: commander.connectTimeout
