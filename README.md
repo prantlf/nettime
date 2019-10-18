@@ -1,14 +1,10 @@
 # nettime
 [![NPM version](https://badge.fury.io/js/nettime.png)](http://badge.fury.io/js/nettime)
 [![Build Status](https://travis-ci.org/prantlf/nettime.png)](https://travis-ci.org/prantlf/nettime)
-[![Coverage Status](https://coveralls.io/repos/github/prantlf/nettime/badge.svg?branch=master)](https://coveralls.io/github/prantlf/nettime?branch=master)
 [![codecov](https://codecov.io/gh/prantlf/nettime/branch/master/graph/badge.svg)](https://codecov.io/gh/prantlf/nettime)
+[![codebeat badge](https://codebeat.co/badges/9d85c898-df08-42fb-8ab9-407dc2ce2d22)](https://codebeat.co/projects/github-com-prantlf-nettime-master)
 [![Dependency Status](https://david-dm.org/prantlf/nettime.svg)](https://david-dm.org/prantlf/nettime)
 [![devDependency Status](https://david-dm.org/prantlf/nettime/dev-status.svg)](https://david-dm.org/prantlf/nettime#info=devDependencies)
-[![Maintainability](https://api.codeclimate.com/v1/badges/b17aff2d4bc103085639/maintainability)](https://codeclimate.com/github/prantlf/nettime/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/b17aff2d4bc103085639/test_coverage)](https://codeclimate.com/github/prantlf/nettime/test_coverage)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/864e23edaf654281b8b763d74494da38)](https://www.codacy.com/app/prantlf/nettime?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=prantlf/nettime&amp;utm_campaign=Badge_Grade)
-[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/864e23edaf654281b8b763d74494da38)](https://www.codacy.com/app/prantlf/nettime?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=prantlf/nettime&amp;utm_campaign=Badge_Coverage)
 [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 [![NPM Downloads](https://nodei.co/npm/nettime.png?downloads=true&stars=true)](https://www.npmjs.com/package/nettime)
@@ -75,23 +71,25 @@ are compatible with curl. Timings are printed to the standard output.
 
 ## Programmatic usage
 
-Make sure that you use [NodeJS] >= 6. Install the `nettime` package locally and get time duration of waiting for the response and downloading the content of a sample web page:
+Make sure that you use [Node.js] >= 8. Install the `nettime` package locally and get time duration of waiting for the response and downloading the content of a sample web page:
 
 ```bash
 npm install --save nettime
 ```
 
-```javascript
+```js
 const nettime = require('nettime')
-nettime('https://www.google.com').then(result => {
-  if (result.statusCode === 200) {
-    let timings = result.timings
-    let waiting = nettime.getDuration([0, 0], timings.firstByte)
-    let downloading = nettime.getDuration(timings.firstByte, timings.contentTransfer)
-    console.log('Waiting for the response:', nettime.getMilliseconds(waiting) + 'ms')
-    console.log('Downloading the content:', nettime.getMilliseconds(downloading) + 'ms')
-  }
-})
+nettime('https://www.google.com')
+  .then(result => {
+    if (result.statusCode === 200) {
+      let timings = result.timings
+      let waiting = nettime.getDuration([0, 0], timings.firstByte)
+      let downloading = nettime.getDuration(timings.firstByte, timings.contentTransfer)
+      console.log('Waiting for the response:', nettime.getMilliseconds(waiting) + 'ms')
+      console.log('Downloading the content:', nettime.getMilliseconds(downloading) + 'ms')
+    }
+  })
+  .catch(error => console.error(error))
 ```
 
 The main module exports a function which makes a HTTP/S request and returns a [Promise] to the result object.
@@ -119,7 +117,7 @@ The result object contains:
 * `statusMessage`: HTTP status message for the status code (string).
 * `timings`: object with timing properties from various stages of the request. Timing is an array with two integers - seconds and nanoseconds passed since the request has been made, as returned by [process.hrtime].
 
-```javascript
+```js
 {
   "httpVersion": '1.1',
   "statusCode": 200,
@@ -145,12 +143,19 @@ The following static methods are exposed on the `nettime` function to help deali
 * `getDuration(start, end)`: computes the difference between two timings. Expects two arrays in [process.hrtime]'s format and returns the result as an array in the same format.
 * `getMilliseconds(timing)`: converts the timing to milliseconds. Expects an array in [process.hrtime]'s format and returns the result as an integer.
 
+These methods can be required separately too:
+
+```js
+const { getDuration, getMilliseconds } = require('nettime/lib/timings')
+```
+
 ## Contributing
 
 In lieu of a formal styleguide, take care to maintain the existing coding style.  Add unit tests for any new or changed functionality. Lint and test your code using Grunt.
 
 ## Release History
 
+* 2019-10-18   v2.1.2   Fix crash on Node.js 10 and newer
 * 2019-03-10   v2.1.0   Added option for setting connection timeout
 * 2018-05-19   v2.0.1   Fixed http2 connection for Node.js 8.11.2
 * 2018-04-27   v2.0.0   Dropped support of Node.js 4
