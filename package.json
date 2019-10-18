@@ -55,7 +55,7 @@
     "time",
     "net",
     "http",
-    "http",
+    "https",
     "measure",
     "timings",
     "request"
