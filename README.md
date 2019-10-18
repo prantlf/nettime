@@ -23,7 +23,7 @@ The programmatic interface did not change and has remained compatible.
 
 ## Command-line usage
 
-Make sure that you have [NodeJS] >= 6 installed. Install the `nettime` package globally and print timings of a sample web site:
+Make sure that you have [Node.js] >= 8 installed. Install the `nettime` package globally and print timings of a sample web site:
 
 ```bash
 $ npm install -g nettime
@@ -179,7 +179,7 @@ Copyright (c) 2017-2019 Ferdinand Prantl
 Licensed under the MIT license.
 
 [time]: https://en.wikipedia.org/wiki/Time_(Unix)
-[NodeJS]: http://nodejs.org/
+[Node.js]: http://nodejs.org/
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [HTTP status code]: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 [process.hrtime]: https://nodejs.org/api/process.html#process_process_hrtime_time
