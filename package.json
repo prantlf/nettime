@@ -30,7 +30,8 @@
     "nettime": "./bin/nettime"
   },
   "scripts": {
-    "lint": "standard bin/nettime lib/*.js tests/*.js",
+    "lint": "standard bin/nettime --verbose lib/*.js tests/*.js",
+    "lint:fix": "standard --fix --verbose bin/nettime lib/*.js tests/*.js",
     "check": "tap tests/*.js",
     "test": "npm run lint && npm run check",
     "coveralls": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check -- --cov --coverage-report=lcov --no-browser",
@@ -41,17 +42,17 @@
     "coverage": "test `node --version | cut -c 2` -eq 8 && npm run coveralls && npm run codacy && npm run codecov && npm run codeclimate:download && npm run codeclimate:execute"
   },
   "dependencies": {
-    "commander": "^2.20.0",
-    "readline-sync": "^1.4.9",
-    "safe-buffer": "^5.1.2",
-    "sprintf-js": "^1.1.2"
+    "commander": "3.0.2",
+    "readline-sync": "1.4.10",
+    "safe-buffer": "5.2.0",
+    "sprintf-js": "1.1.2"
   },
   "devDependencies": {
-    "codacy-coverage": "^3.4.0",
-    "codecov": "^3.5.0",
-    "coveralls": "^3.0.4",
-    "standard": "^12.0.1",
-    "tap": "^14.2.2"
+    "codacy-coverage": "3.4.0",
+    "codecov": "3.6.1",
+    "coveralls": "3.0.7",
+    "standard": "14.3.1",
+    "tap": "14.7.2"
   },
   "keywords": [
     "nettime",

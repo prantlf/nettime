@@ -59,7 +59,7 @@ const headers = commander.header.reduce(function (result, header) {
 
 let credentials = commander.user
 if (credentials) {
-  let colon = credentials.indexOf(':')
+  const colon = credentials.indexOf(':')
   let username, password
   if (colon > 0) {
     username = credentials.substr(0, colon)
@@ -82,7 +82,7 @@ nettime({
   data: commander.data,
   failOnOutputFileError: false,
   headers: headers,
-  httpVersion: commander['http2'] ? '2.0' : commander['http1.0'] ? '1.0' : '1.1',
+  httpVersion: commander.http2 ? '2.0' : commander['http1.0'] ? '1.0' : '1.1',
   includeHeaders: commander.include,
   method: commander.request || (commander.head ? 'HEAD'
     : commander.data ? 'POST' : 'GET'),
@@ -110,7 +110,7 @@ nettime({
 
 function convertToMilliseconds (timings) {
   const getMilliseconds = nettime.getMilliseconds
-  for (let timing in timings) {
+  for (const timing in timings) {
     timings[timing] = getMilliseconds(timings[timing])
   }
 }
