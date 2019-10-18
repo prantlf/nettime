@@ -4,8 +4,17 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "bin/nettime",
-      "program": "${workspaceRoot}/bin/nettime"
+      "name": "bin",
+      "program": "${workspaceRoot}/bin/nettime",
+      "args": [
+        "https://www.google.com"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "test",
+      "program": "${workspaceRoot}/tests/nettime"
     }
   ]
 }
