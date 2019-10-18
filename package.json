@@ -23,34 +23,30 @@
     }
   ],
   "engines": {
-    "node": ">=6"
+    "node": ">=8"
   },
   "main": "./lib/nettime.js",
   "bin": {
     "nettime": "./bin/nettime"
   },
+  "files": [
+    "bin",
+    "lib"
+  ],
   "scripts": {
-    "lint": "standard bin/nettime --verbose lib/*.js tests/*.js",
+    "lint": "standard --verbose bin/nettime lib/*.js tests/*.js",
     "lint:fix": "standard --fix --verbose bin/nettime lib/*.js tests/*.js",
     "check": "tap tests/*.js",
-    "test": "npm run lint && npm run check",
-    "coveralls": "COVERALLS_REPO_TOKEN=WWZwbWYSXerOnJUWlmnZyhBWvhdfiGVt8 npm run check -- --cov --coverage-report=lcov --no-browser",
-    "codacy": "cat coverage/lcov.info | CODACY_PROJECT_TOKEN=4d0a15031d4f4de0bca223c3908b7d07 codacy-coverage",
-    "codecov": "CODECOV_TOKEN=81a735c5-c3a1-4ef8-932a-95470240ce26 codecov",
-    "codeclimate:download": "curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && chmod +x ./cc-test-reporter",
-    "codeclimate:execute": "CC_TEST_REPORTER_ID=261ca831f78e96f538d8f77ed64b9835b040ed666fe54dd136b6e6c466a55e35 ./cc-test-reporter before-build && cat coverage/lcov.info | CC_TEST_REPORTER_ID=261ca831f78e96f538d8f77ed64b9835b040ed666fe54dd136b6e6c466a55e35 ./cc-test-reporter after-build",
-    "coverage": "test `node --version | cut -c 2` -eq 8 && npm run coveralls && npm run codacy && npm run codecov && npm run codeclimate:download && npm run codeclimate:execute"
+    "test": "npm run lint && npm run check"
   },
   "dependencies": {
     "commander": "3.0.2",
     "readline-sync": "1.4.10",
-    "safe-buffer": "5.2.0",
     "sprintf-js": "1.1.2"
   },
   "devDependencies": {
     "codacy-coverage": "3.4.0",
     "codecov": "3.6.1",
-    "coveralls": "3.0.7",
     "standard": "14.3.1",
     "tap": "14.7.2"
   },
@@ -58,6 +54,9 @@
     "nettime",
     "time",
     "net",
+    "http",
+    "http",
+    "measure",
     "timings",
     "request"
   ]
