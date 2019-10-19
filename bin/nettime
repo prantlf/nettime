@@ -22,7 +22,7 @@ commander
   .option('--http2', 'use HTTP 2')
   .option('-c, --connect-timeout <ms>', 'maximum time to wait for a connection', parseInt)
   .option('-d, --data <data>', 'data to be sent using the POST verb')
-  .option('-f, --format <format>', 'set output format: text, json')
+  .option('-f, --format <format>', 'set output format: text, json, raw')
   .option('-H, --header <header>', 'send specific HTTP header', collect, [])
   .option('-i, --include', 'include response headers in the output')
   .option('-I, --head', 'use HEAD verb to get document info only')
@@ -46,6 +46,33 @@ commander
 const url = commander.args[0]
 if (!url) {
   commander.help()
+}
+
+const timeUnit = commander.timeUnit || 'ms'
+if (['ms', 's+ns'].indexOf(timeUnit) < 0) {
+  console.error(`Invalid time unit: "${timeUnit}". Valid values are "ms", and "s+ns".`)
+  process.exit(1)
+}
+
+const formatters = {
+  json: result => {
+    if (timeUnit !== 's+ns') {
+      convertToMilliseconds(result.timings)
+    }
+    return result
+  },
+  raw: result => JSON.stringify(result),
+  text: ({ timings, httpVersion, statusCode, statusMessage }) => {
+    print(timings, timeUnit)
+    return `Response: HTTP/${httpVersion} ${statusCode} ${statusMessage}`
+  }
+}
+
+const format = commander.format || 'text'
+const formatter = formatters[format]
+if (!formatter) {
+  console.error(`Invalid format: "${format}". Valid formats are "text", "json" and "raw".`)
+  process.exit(1)
 }
 
 const headers = commander.header.reduce(function (result, header) {
@@ -90,21 +117,9 @@ nettime({
   rejectUnauthorized: !commander.insecure,
   timeout: commander.connectTimeout
 })
-  .then(function (result) {
-    const timeUnit = commander.timeUnit
-    if (commander.format === 'json') {
-      if (timeUnit !== 's+ns') {
-        convertToMilliseconds(result.timings)
-      }
-      console.log(result)
-    } else {
-      print(result.timings, timeUnit)
-      console.log('Response: HTTP/' + result.httpVersion, result.statusCode,
-        result.statusMessage)
-    }
-  })
-  .catch(function (error) {
-    console.error(error.message)
+  .then(result => console.log(formatter(result)))
+  .catch(({ message }) => {
+    console.error(message)
     process.exitCode = 1
   })
 

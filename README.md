@@ -54,7 +54,7 @@ Options:
       --http2                 use HTTP 2.0
   -c, --connect-timeout <ms>  maximum time to wait for a connection
   -d, --data <data>           data to be sent using the POST verb
-  -f, --format <format>       set output format: text, json
+  -f, --format <format>       set output format: text, json, raw
   -H, --header <header>       send specific HTTP header
   -i, --include               include response headers in the output
   -I, --head                  use HEAD verb to get document info only
@@ -140,7 +140,7 @@ The result object contains:
 
 The following static methods are exposed on the `nettime` function to help dealing with [process.hrtime]'s timing format:
 
-* `getDuration(start, end)`: computes the difference between two timings. Expects two arrays in [process.hrtime]'s format and returns the result as an array in the same format.
+* `getDuration(start, end)`: computes the difference between two timings. Expects two arrays in [process.hrtime]'s format and returns the result as an array in the same [process.hrtime]'s format.
 * `getMilliseconds(timing)`: converts the timing to milliseconds. Expects an array in [process.hrtime]'s format and returns the result as an integer.
 
 These methods can be required separately too:
