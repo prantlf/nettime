@@ -175,6 +175,8 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 
+* 2019-10-19   v3.0.0   Support multiple requests and average timings,
+                        dropped support of Node.js 6
 * 2019-10-18   v2.1.2   Fix crash on Node.js 10 and newer
 * 2019-03-10   v2.1.0   Added option for setting connection timeout
 * 2018-05-19   v2.0.1   Fixed http2 connection for Node.js 8.11.2
