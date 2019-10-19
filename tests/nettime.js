@@ -22,9 +22,8 @@ let lastRequest
 function createServer (protocol, port, options) {
   if (protocol) {
     return new Promise((resolve, reject) => {
-      const server = options
-        ? (protocol.createSecureServer || protocol.createServer)(options, serve)
-        : protocol.createServer(serve)
+      const creator = protocol.createSecureServer || protocol.createServer
+      const server = options ? creator(options, serve) : protocol.createServer(serve)
       server.on('error', reject)
         .listen(port, ipAddress, () => {
           servers.push(server)
@@ -39,23 +38,21 @@ function readCertificate (name) {
 }
 
 function serve (request, response) {
-  setTimeout(() => {
+  setTimeout(respond, 2)
+
+  function respond () {
     const url = request.url
     const download = url === '/download'
     const upload = url === '/upload'
-    var data
+    let data
 
     function sendResponse () {
       const ok = download || upload
-      lastRequest = {
-        data: data,
-        headers: request.headers,
-        httpVersion: request.httpVersion,
-        method: request.method
-      }
-      response.writeHead(ok ? 200 : url === '/' ? 204 : 404, {
-        test: 'ok'
-      })
+      const headers = request.headers
+      const httpVersion = request.httpVersion
+      const method = request.method
+      lastRequest = { data, headers, httpVersion, method }
+      response.writeHead(ok ? 200 : url === '/' ? 204 : 404, { test: 'ok' })
       if (ok) {
         response.write('data')
       }
@@ -64,14 +61,13 @@ function serve (request, response) {
 
     if (upload) {
       data = ''
-      request.on('data', chunk => {
-        data += chunk
-      })
+      request
+        .on('data', chunk => (data += chunk))
         .on('end', sendResponse)
     } else {
       sendResponse()
     }
-  }, 2)
+  }
 }
 
 function startServers () {
@@ -85,7 +81,7 @@ function startServers () {
 }
 
 function stopServers () {
-  var server
+  let server
   while ((server = servers.pop())) {
     server.close()
   }
@@ -120,32 +116,29 @@ function makeRequest (protocol, host, port, path, options) {
       headers = options
     }
   }
+  const rejectUnauthorized = false
   return nettime(https || options ? {
-    url: url,
-    credentials: credentials,
-    data: data,
-    failOnOutputFileError: failOnOutputFileError,
-    headers: headers,
-    httpVersion: httpVersion,
-    includeHeaders: includeHeaders,
-    method: method,
-    outputFile: outputFile,
-    rejectUnauthorized: false,
-    returnResponse: returnResponse,
-    timeout: timeout
+    url,
+    credentials,
+    data,
+    failOnOutputFileError,
+    headers,
+    httpVersion,
+    includeHeaders,
+    method,
+    outputFile,
+    rejectUnauthorized,
+    returnResponse,
+    timeout
   } : url)
     .then(checkRequest.bind(null, {
-      httpVersion: httpVersion,
-      returnResponse: returnResponse,
-      includeHeaders: includeHeaders
+      httpVersion,
+      returnResponse,
+      includeHeaders
     }))
 }
 
 function checkRequest (options, result) {
-  const httpVersion = options.httpVersion || '1.1'
-  const timings = result.timings
-  const tcpConnection = timings.tcpConnection
-  const firstByte = timings.firstByte
   let resultCount = 4
   test.equal(typeof result, 'object')
   if (options.returnResponse) {
@@ -155,13 +148,16 @@ function checkRequest (options, result) {
     ++resultCount
   }
   test.equal(Object.keys(result).length, resultCount)
+  const httpVersion = options.httpVersion || '1.1'
   if (httpVersion === '1.0') {
     result.httpVersion = '1.0'
   }
   test.equal(result.httpVersion, httpVersion)
   test.equal(lastRequest.httpVersion, httpVersion)
+  const { timings } = result
   test.equal(typeof timings, 'object')
   checkTiming(timings.socketOpen)
+  const { tcpConnection, firstByte } = timings
   checkTiming(tcpConnection)
   checkTiming(firstByte)
   checkTiming(timings.contentTransfer)

@@ -15,13 +15,32 @@ const example = {
   statusCode: 200,
   statusMessage: 'OK'
 }
+const { timings } = example
 
 test.test('test printing seconds', test => {
-  printTimings(example.timings, 's')
+  const output = printTimings(timings, 's')
+  test.ok(/\ds/.test(output))
+  test.ok(!/\dms/.test(output))
   test.end()
 })
 
 test.test('test printing seconds and nanoseconds', test => {
-  printTimings(example.timings, 's+ns')
+  const output = printTimings(timings, 's+ns')
+  test.ok(/\ds/.test(output))
+  test.ok(/\dms/.test(output))
+  test.end()
+})
+
+test.test('test printing seconds with incomplete timing', test => {
+  const timings2 = timings
+  delete timings2.tlsHandshake
+  printTimings(timings2, 's')
+  test.end()
+})
+
+test.test('test printing nanoseconds with incomplete timing', test => {
+  const timings2 = timings
+  delete timings2.tlsHandshake
+  printTimings(timings2, 's+ns')
   test.end()
 })

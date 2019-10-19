@@ -1,17 +1,10 @@
 #!/usr/bin/env node
 
-'use strict'
-
 const commander = require('commander')
 const nettime = require('..')
 const { version, description } = require('../package.json')
-const print = require('../lib/printer')
+const printTimings = require('../lib/printer')
 const readlineSync = require('readline-sync')
-
-function collect (value, result) {
-  result.push(value)
-  return result
-}
 
 commander
   .version(version)
@@ -31,7 +24,7 @@ commander
   .option('-t, --time-unit <unit>', 'set time unit: ms, s+ns')
   .option('-u, --user <credentials>', 'credentials for Basic Authentication')
   .option('-X, --request <verb>', 'specify HTTP verb to use for the request')
-  .on('--help', function () {
+  .on('--help', () => {
     console.log()
     console.log('  The default output format is "text" and time unit "ms". Other options')
     console.log('  are compatible with curl. Timings are printed to the standard output.')
@@ -62,10 +55,9 @@ const formatters = {
     return result
   },
   raw: result => JSON.stringify(result),
-  text: ({ timings, httpVersion, statusCode, statusMessage }) => {
-    print(timings, timeUnit)
-    return `Response: HTTP/${httpVersion} ${statusCode} ${statusMessage}`
-  }
+  text: ({ timings, httpVersion, statusCode, statusMessage }) =>
+    printTimings(timings, timeUnit) +
+    `\nResponse: HTTP/${httpVersion} ${statusCode} ${statusMessage}`
 }
 
 const format = commander.format || 'text'
@@ -75,11 +67,17 @@ if (!formatter) {
   process.exit(1)
 }
 
-const headers = commander.header.reduce(function (result, header) {
+const headers = commander.header.reduce((result, header) => {
   const colon = header.indexOf(':')
   if (colon > 0) {
-    result[header.substr(0, colon).trim().toLowerCase()] =
-      header.substr(colon + 1).trim()
+    const name = header
+      .substr(0, colon)
+      .trim()
+      .toLowerCase()
+    const value = header
+      .substr(colon + 1)
+      .trim()
+    result[name] = value
   }
   return result
 }, {})
@@ -93,35 +91,43 @@ if (credentials) {
     password = credentials.substr(colon + 1)
   } else {
     username = credentials
-    password = readlineSync.question('Password: ', {
-      hideEchoBack: true
-    })
+    password = readlineSync.question('Password: ', { hideEchoBack: true })
   }
-  credentials = {
-    username: username,
-    password: password
-  }
+  credentials = { username, password }
 }
 
+const {
+  connectTimeout: timeout, data, head, include: includeHeaders, insecure,
+  output: outputFile, request
+} = commander
+const httpVersion = commander.http2 ? '2.0' : commander['http1.0'] ? '1.0' : '1.1'
+const method = request || (head ? 'HEAD' : data ? 'POST' : 'GET')
+const failOnOutputFileError = false
+const rejectUnauthorized = !insecure
+
 nettime({
-  url: url,
-  credentials: credentials,
-  data: commander.data,
-  failOnOutputFileError: false,
-  headers: headers,
-  httpVersion: commander.http2 ? '2.0' : commander['http1.0'] ? '1.0' : '1.1',
-  includeHeaders: commander.include,
-  method: commander.request ||
-    (commander.head ? 'HEAD' : commander.data ? 'POST' : 'GET'),
-  outputFile: commander.output,
-  rejectUnauthorized: !commander.insecure,
-  timeout: commander.connectTimeout
+  httpVersion,
+  method,
+  url,
+  credentials,
+  headers,
+  data,
+  failOnOutputFileError,
+  includeHeaders,
+  outputFile,
+  rejectUnauthorized,
+  timeout
 })
   .then(result => console.log(formatter(result)))
   .catch(({ message }) => {
     console.error(message)
     process.exitCode = 1
   })
+
+function collect (value, result) {
+  result.push(value)
+  return result
+}
 
 function convertToMilliseconds (timings) {
   const getMilliseconds = nettime.getMilliseconds
