@@ -3,6 +3,9 @@
 const commander = require('commander')
 const nettime = require('..')
 const { version, description } = require('../package.json')
+const {
+  computeAverageDurations, createTimingsFromDurations
+} = require('../lib/timings')
 const printTimings = require('../lib/printer')
 const readlineSync = require('readline-sync')
 
@@ -13,7 +16,7 @@ commander
   .option('-0, --http1.0', 'use HTTP 1.0')
   .option('--http1.1', 'use HTTP 1.1 (default)')
   .option('--http2', 'use HTTP 2')
-  .option('-c, --connect-timeout <ms>', 'maximum time to wait for a connection', parseInt)
+  .option('-c, --connect-timeout <ms>', 'maximum time to wait for a connection', totInteger)
   .option('-d, --data <data>', 'data to be sent using the POST verb')
   .option('-f, --format <format>', 'set output format: text, json, raw')
   .option('-H, --header <header>', 'send specific HTTP header', collect, [])
@@ -24,6 +27,9 @@ commander
   .option('-t, --time-unit <unit>', 'set time unit: ms, s+ns')
   .option('-u, --user <credentials>', 'credentials for Basic Authentication')
   .option('-X, --request <verb>', 'specify HTTP verb to use for the request')
+  .option('-C, --request-count <count>', 'count of requests to make', totInteger, 1)
+  .option('-D, --request-delay <ms>', 'delay between two requests', totInteger, 100)
+  .option('-A, --average-timings', 'print an average of multiple request timings')
   .on('--help', () => {
     console.log()
     console.log('  The default output format is "text" and time unit "ms". Other options')
@@ -31,8 +37,9 @@ commander
     console.log()
     console.log('  Examples:')
     console.log()
-    console.log('    $ nettime https://www.google.com')
-    console.log('    $ nettime -f json https://www.github.com')
+    console.log('    $ nettime https://www.github.com')
+    console.log('    $ nettime -f json https://www.gitlab.com')
+    console.log('    $ nettime --http2 -C 3 -A https://www.google.com')
   })
   .parse(process.argv)
 
@@ -98,7 +105,7 @@ if (credentials) {
 
 const {
   connectTimeout: timeout, data, head, include: includeHeaders, insecure,
-  output: outputFile, request
+  output: outputFile, request, requestCount, requestDelay, averageTimings
 } = commander
 const httpVersion = commander.http2 ? '2.0' : commander['http1.0'] ? '1.0' : '1.1'
 const method = request || (head ? 'HEAD' : data ? 'POST' : 'GET')
@@ -116,9 +123,27 @@ nettime({
   includeHeaders,
   outputFile,
   rejectUnauthorized,
-  timeout
+  timeout,
+  requestCount,
+  requestDelay
 })
-  .then(result => console.log(formatter(result)))
+  .then(results => {
+    if (requestCount > 1) {
+      if (averageTimings) {
+        const result = computeAverageTimings(results)
+        results = [result]
+      }
+    } else {
+      results = [results]
+    }
+    return results
+  })
+  .then(results => {
+    for (const result of results) {
+      console.log(formatter(result))
+      console.log()
+    }
+  })
   .catch(({ message }) => {
     console.error(message)
     process.exitCode = 1
@@ -129,9 +154,39 @@ function collect (value, result) {
   return result
 }
 
+function totInteger (value) {
+  return parseInt(value)
+}
+
 function convertToMilliseconds (timings) {
   const getMilliseconds = nettime.getMilliseconds
   for (const timing in timings) {
     timings[timing] = getMilliseconds(timings[timing])
+  }
+}
+
+function computeAverageTimings (results) {
+  checkStatusCodes()
+  const timings = results.map(({ timings }) => timings)
+  const averageDurations = computeAverageDurations(timings)
+  return createAverageResult(results[0], averageDurations)
+
+  function checkStatusCodes () {
+    let firstStatusCode
+    for (const { statusCode } of results) {
+      if (firstStatusCode === undefined) {
+        firstStatusCode = statusCode
+      } else {
+        if (firstStatusCode !== statusCode) {
+          throw new Error(`Status code of the first request was ${firstStatusCode}, but ${statusCode} was received later.`)
+        }
+      }
+    }
+  }
+
+  function createAverageResult (firstResult, averageDurations) {
+    const { httpVersion, statusCode, statusMessage } = firstResult
+    const timings = createTimingsFromDurations(averageDurations)
+    return { timings, httpVersion, statusCode, statusMessage }
   }
 }

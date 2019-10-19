@@ -24,7 +24,8 @@ function createServer (protocol, port, options) {
     return new Promise((resolve, reject) => {
       const creator = protocol.createSecureServer || protocol.createServer
       const server = options ? creator(options, serve) : protocol.createServer(serve)
-      server.on('error', reject)
+      server
+        .on('error', reject)
         .listen(port, ipAddress, () => {
           servers.push(server)
           resolve()
@@ -205,11 +206,29 @@ test.test('test a full URL', test => {
     .then(test.end)
 })
 
-test.test('test a full URL withotu password', test => {
+test.test('test a full URL without password', test => {
   return makeRequest('http', 'user@localhost', insecurePort, '?search#hash')
     .then(result => {
       test.equal(result.statusCode, 404)
       test.equal(result.statusMessage, 'Not Found')
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
+test.test('test two requests', test => {
+  return nettime({
+    url: `http://localhost:${insecurePort}`,
+    requestCount: 2,
+    requestDelay: 1
+  })
+    .then(results => {
+      test.ok(Array.isArray(results))
+      for (const result of results) {
+        checkRequest({}, result)
+        test.equal(result.statusCode, 204)
+        test.equal(result.statusMessage, 'No Content')
+      }
     })
     .catch(test.threw)
     .then(test.end)

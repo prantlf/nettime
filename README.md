@@ -48,25 +48,33 @@ Usage: nettime [options] <URL>
 
 Options:
 
-  -V, --version               output the version number
-  -0, --http1.0               use HTTP 1.0
-      --http1.1               use HTTP 1.1 (default)
-      --http2                 use HTTP 2.0
-  -c, --connect-timeout <ms>  maximum time to wait for a connection
-  -d, --data <data>           data to be sent using the POST verb
-  -f, --format <format>       set output format: text, json, raw
-  -H, --header <header>       send specific HTTP header
-  -i, --include               include response headers in the output
-  -I, --head                  use HEAD verb to get document info only
-  -k, --insecure              ignore certificate errors
-  -o, --output <file>         write the received data to a file
-  -t, --time-unit <unit>      set time unit: ms, s+ns
-  -u, --user <credentials>    credentials for Basic Authentication
-  -X, --request <verb>        specify HTTP verb to use for the request
-  -h, --help                  output usage information
+  -V, --version                output the version number
+  -0, --http1.0                use HTTP 1.0
+      --http1.1                use HTTP 1.1 (default)
+      --http2                  use HTTP 2.0
+  -c, --connect-timeout <ms>   maximum time to wait for a connection
+  -d, --data <data>            data to be sent using the POST verb
+  -f, --format <format>        set output format: text, json, raw
+  -H, --header <header>        send specific HTTP header
+  -i, --include                include response headers in the output
+  -I, --head                   use HEAD verb to get document info only
+  -k, --insecure               ignore certificate errors
+  -o, --output <file>          write the received data to a file
+  -t, --time-unit <unit>       set time unit: ms, s+ns
+  -u, --user <credentials>     credentials for Basic Authentication
+  -X, --request <verb>         specify HTTP verb to use for the request
+  -C, --request-count <count>  count of requests to make (default: 1)
+  -D, --request-delay <ms>     delay between two requests
+  -A, --average-timings        print an average of multiple request timings
+  -h, --help                   output usage information
 
 The default output format is "text" and time unit "ms". Other options
 are compatible with curl. Timings are printed to the standard output.
+
+Examples:
+
+  $ nettime -f json https://www.github.com
+  $ nettime --http2 -C 3 -A https://www.google.com
 ```
 
 ## Programmatic usage
@@ -109,6 +117,9 @@ The input object can contain:
 * `outputFile`: file path to write the received data to.
 * `rejectUnauthorized`: boolean to refuse finishing the HTTPS request, is set to `true` (the default), if validation of the web site certificate fails; setting it to `false` makes the request ignore certificate errors.
 * `returnResponse`: boolean for including property `response` (`Buffer`) with the received data in the promised result object.
+* `requestCount`: integer for making multiple requests instead of one.
+* `requestDelay`: integer to introduce a delay (in milliseconds ) between each two requests. The default is 100.
+* `timeout`: intere to set the maximum time (in milliseconds) a single request should take before aborting it.
 
 The result object contains:
 
@@ -134,20 +145,29 @@ The result object contains:
 }
 ```
 
+If the option `requestCount` is greater than `1`, the result objects will be returned in an array of the same length as teh `requestCount` value.
+
 *Note*: The `time-unit` parameter affects not only the "text" output format of the command line script, but also the "json" one. If set to "ms", timing values will be printed in milliseconds. If set to "s+ns", timings will be printed as arrays in [process.hrtime]'s format. Calling the `nettime` function programmatically will always return the timings as arrays in [process.hrtime]'s format.
 
 ### Helper functions
 
-The following static methods are exposed on the `nettime` function to help dealing with [process.hrtime]'s timing format:
+The following functions are exposed as named exports from the `nettime/lib/timings` module to help dealing with [process.hrtime]'s timing format and timings from multiple requests:
 
 * `getDuration(start, end)`: computes the difference between two timings. Expects two arrays in [process.hrtime]'s format and returns the result as an array in the same [process.hrtime]'s format.
 * `getMilliseconds(timing)`: converts the timing to milliseconds. Expects an array in [process.hrtime]'s format and returns the result as an integer.
+* `computeAverageDurations(multipleTimings)`: computes average durations from an array of event timings. The array is supposed to contain objects with the same keys as the `timings` object from the `nettime` response. The returned object will contain the same keys pointing to event durations in [process.hrtime]'s format.
+* `createTimingsFromDurations(timings, startTime)`: reconstructs event timings from event durations. The `timings` object is supposed to contain the same keys as the `timings` object from the `nettime` response, but pointing to event durations in [process.hrtime]'s format. The returned object will contain the same keys, but pointing to event times in [process.hrtime]'s format. The `startTime` parameter can shoft the event times. The default is no shift - `[0, 0]`.
 
 These methods can be required separately too:
 
 ```js
-const { getDuration, getMilliseconds } = require('nettime/lib/timings')
+const {
+  getDuration, getMilliseconds,
+  computeAverageDurations, createTimingsFromDurations
+} = require('nettime/lib/timings')
 ```
+
+Methods `getDuration` and `getMilliseconds` are accessible also as static methods of the `nettime` function exported from the main `nettime` module.
 
 ## Contributing
 
