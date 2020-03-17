@@ -39,7 +39,7 @@ function readCertificate (name) {
 }
 
 function serve (request, response) {
-  setTimeout(respond, 2)
+  setTimeout(respond, 5)
 
   function respond () {
     const url = request.url
@@ -289,9 +289,9 @@ test.test('test with a missing web page', test => {
     .then(test.end)
 })
 
-test.test('test timed out connection to an unreachable host', test => {
-  return makeRequest('http', '192.0.2.1', 80, '/', {
-    timeout: 10
+test.test('test response timeout', test => {
+  return makeRequest('http', ipAddress, insecurePort, '', {
+    timeout: 1
   })
     .then(test.fail)
     .catch(error => {
