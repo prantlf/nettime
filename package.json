@@ -26,6 +26,7 @@
     "node": ">=8"
   },
   "main": "./lib/nettime.js",
+  "types": "./lib/nettime.d.ts",
   "bin": {
     "nettime": "./bin/nettime"
   },
