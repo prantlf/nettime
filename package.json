@@ -23,7 +23,7 @@
     }
   ],
   "engines": {
-    "node": ">=8"
+    "node": ">=12"
   },
   "main": "./lib/nettime.js",
   "bin": {
@@ -44,7 +44,7 @@
     "check-coverage": false
   },
   "dependencies": {
-    "commander": "3.0.2",
+    "commander": "8.3.0",
     "readline-sync": "1.4.10",
     "sprintf-js": "1.1.2"
   },

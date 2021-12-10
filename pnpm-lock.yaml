@@ -1,14 +1,14 @@
 lockfileVersion: 5.3
 
 specifiers:
-  commander: 3.0.2
+  commander: 8.3.0
   readline-sync: 1.4.10
   sprintf-js: 1.1.2
   standard: 16.0.4
   tap: 15.1.5
 
 dependencies:
-  commander: 3.0.2
+  commander: 8.3.0
   readline-sync: 1.4.10
   sprintf-js: 1.1.2
 
@@ -596,8 +596,9 @@ packages:
       delayed-stream: 1.0.0
     dev: true
 
-  /commander/3.0.2:
-    resolution: {integrity: sha512-Gar0ASD4BDyKC4hl4DwHqDrmvjoxWKZigVnAbn5H1owvm4CxCPdb0HQDehwNYMJpla5+M2tPmPARzhtYuwpHow==}
+  /commander/8.3.0:
+    resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
+    engines: {node: '>= 12'}
     dev: false
 
   /commondir/1.0.1:

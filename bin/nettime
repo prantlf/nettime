@@ -48,7 +48,8 @@ if (!url) {
   commander.help()
 }
 
-const timeUnit = commander.timeUnit || 'ms'
+const options = commander.opts()
+const timeUnit = options.timeUnit || 'ms'
 if (['ms', 's+ns'].indexOf(timeUnit) < 0) {
   console.error(`Invalid time unit: "${timeUnit}". Valid values are "ms", and "s+ns".`)
   process.exit(1)
@@ -67,14 +68,14 @@ const formatters = {
     `\nResponse: HTTP/${httpVersion} ${statusCode} ${statusMessage}`
 }
 
-const format = commander.format || 'text'
+const format = options.format || 'text'
 const formatter = formatters[format]
 if (!formatter) {
   console.error(`Invalid format: "${format}". Valid formats are "text", "json" and "raw".`)
   process.exit(1)
 }
 
-const headers = commander.header.reduce((result, header) => {
+const headers = options.header.reduce((result, header) => {
   const colon = header.indexOf(':')
   if (colon > 0) {
     const name = header
@@ -89,7 +90,7 @@ const headers = commander.header.reduce((result, header) => {
   return result
 }, {})
 
-let credentials = commander.user
+let credentials = options.user
 if (credentials) {
   const colon = credentials.indexOf(':')
   let username, password
@@ -106,8 +107,8 @@ if (credentials) {
 const {
   connectTimeout: timeout, data, head, include: includeHeaders, insecure,
   output: outputFile, request, requestCount, requestDelay, averageTimings
-} = commander
-const httpVersion = commander.http2 ? '2.0' : commander['http1.0'] ? '1.0' : '1.1'
+} = options
+const httpVersion = options.http2 ? '2.0' : options['http1.0'] ? '1.0' : '1.1'
 const method = request || (head ? 'HEAD' : data ? 'POST' : 'GET')
 const failOnOutputFileError = false
 const rejectUnauthorized = !insecure
