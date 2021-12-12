@@ -37,7 +37,8 @@
     "lint": "standard --verbose bin/nettime lib/*.js tests/*.js",
     "lint:fix": "standard --fix --verbose bin/nettime lib/*.js tests/*.js",
     "check": "tap tests/*.js",
-    "test": "npm run lint && npm run check"
+    "test": "npm run lint && npm run check",
+    "coverage": "tap --coverage-report=text-lcov | npx coverage"
   },
   "dependencies": {
     "commander": "3.0.2",
