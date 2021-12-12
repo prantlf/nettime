@@ -38,7 +38,7 @@
     "lint:fix": "standard --fix --verbose bin/nettime lib/*.js tests/*.js",
     "check": "tap tests/*.js",
     "test": "npm run lint && npm run check",
-    "coverage": "tap --coverage-report=text-lcov | npx coverage"
+    "coverage": "tap --coverage-report=text-lcov | npx codecov"
   },
   "tap": {
     "check-coverage": false
