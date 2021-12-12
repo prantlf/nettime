@@ -1,9 +1,11 @@
-name: Release
+name: Test or Release
 
-on: [push]
+on:
+  - push
+  - pull_request
 
 jobs:
-  release:
+  tets-or-release:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Sources
@@ -24,7 +26,10 @@ jobs:
     - name: Coverage
       run: npm run coverage
     - name: Publish
+      uses: cycjimmy/semantic-release-action@v2
+      with:
+        semantic_version: 18
+        branches: master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: npx semantic-release
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
