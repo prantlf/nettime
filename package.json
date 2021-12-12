@@ -42,7 +42,7 @@
     "lint:fix": "standard --fix --verbose bin/nettime lib/*.js tests/*.js",
     "check": "tap tests/*.js",
     "test": "npm run lint && npm run check",
-    "coverage": "tap --coverage-report=text-lcov | npx codecov"
+    "coverage": "tap --coverage-report=text-lcov | pnpx -y codecov"
   },
   "release": {
     "plugins": [
@@ -50,7 +50,7 @@
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
       "@semantic-release/npm",
-      "@semantic-release/github",
+      ["@semantic-release/github", { "failComment": false }],
       "@semantic-release/git"
     ]
   },
