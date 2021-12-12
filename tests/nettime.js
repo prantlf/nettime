@@ -118,20 +118,22 @@ function makeRequest (protocol, host, port, path, options) {
     }
   }
   const rejectUnauthorized = false
-  return nettime(https || options ? {
-    url,
-    credentials,
-    data,
-    failOnOutputFileError,
-    headers,
-    httpVersion,
-    includeHeaders,
-    method,
-    outputFile,
-    rejectUnauthorized,
-    returnResponse,
-    timeout
-  } : url)
+  return nettime(https || options
+    ? {
+        url,
+        credentials,
+        data,
+        failOnOutputFileError,
+        headers,
+        httpVersion,
+        includeHeaders,
+        method,
+        outputFile,
+        rejectUnauthorized,
+        returnResponse,
+        timeout
+      }
+    : url)
     .then(checkRequest.bind(null, {
       httpVersion,
       returnResponse,
@@ -163,7 +165,7 @@ function checkRequest (options, result) {
   checkTiming(firstByte)
   checkTiming(timings.contentTransfer)
   checkTiming(timings.socketClose)
-  test.ok(getTestDuration(tcpConnection, firstByte) >= 1 * 1e6)
+  test.ok(getTestDuration(tcpConnection, firstByte) >= 1e6)
   return result
 }
 
@@ -289,9 +291,25 @@ test.test('test with a missing web page', test => {
     .then(test.end)
 })
 
-test.test('test timed out connection to an unreachable host', test => {
+test.test('test failed connection to a not responding host', test => {
+  const start = new Date().getTime()
   return makeRequest('http', '192.0.2.1', 80, '/', {
     timeout: 10
+  })
+    .then(test.fail)
+    .catch(error => {
+      const end = new Date().getTime()
+      test.ok(start + 9 < end)
+      test.ok(error instanceof Error)
+      test.equal(error.code, 'ETIMEDOUT')
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
+test.test('test response timeout', test => {
+  return makeRequest('http', ipAddress, insecurePort, '', {
+    timeout: 1
   })
     .then(test.fail)
     .catch(error => {
