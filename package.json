@@ -40,6 +40,9 @@
     "test": "npm run lint && npm run check",
     "coverage": "tap --coverage-report=text-lcov | npx coverage"
   },
+  "tap": {
+    "check-coverage": false
+  },
   "dependencies": {
     "commander": "3.0.2",
     "readline-sync": "1.4.10",
