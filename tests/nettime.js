@@ -9,7 +9,8 @@ try {
 const https = require('https')
 const { join } = require('path')
 const test = require('tap')
-const nettime = require('..')
+const exported = require('..')
+const { nettime, isRedirect } = exported
 const { getDuration, getMilliseconds } = require('../lib/timings')
 
 const ipAddress = '127.0.0.1'
@@ -35,7 +36,7 @@ function createServer (protocol, port, options) {
 }
 
 function readCertificate (name) {
-  return readFileSync(join(__dirname, name + '.pem'))
+  return readFileSync(join(__dirname, `${name}.pem`))
 }
 
 function serve (request, response) {
@@ -45,15 +46,22 @@ function serve (request, response) {
     const url = request.url
     const download = url === '/download'
     const upload = url === '/upload'
+    const redirect = url === '/redirect'
     let data
 
     function sendResponse () {
-      const ok = download || upload
+      const ok = download || upload || redirect
       const headers = request.headers
       const httpVersion = request.httpVersion
       const method = request.method
+      const responseHeaders = { test: 'ok' }
+      if (redirect) {
+        responseHeaders.location = `http://${request.headers.host}/download`
+      }
       lastRequest = { data, headers, httpVersion, method }
-      response.writeHead(ok ? 200 : url === '/' ? 204 : 404, { test: 'ok' })
+      response.writeHead(ok
+        ? redirect ? 302 : 200
+        : url === '/' ? 204 : 404, responseHeaders)
       if (ok) {
         response.write('data')
       }
@@ -90,9 +98,10 @@ function stopServers () {
 
 function makeRequest (protocol, host, port, path, options) {
   const https = protocol === 'https'
-  const url = protocol + '://' + host + ':' + port + (path || '')
-  let credentials, headers, method, outputFile, failOnOutputFileError
-  let returnResponse, includeHeaders, data, httpVersion, timeout
+  const url = `${protocol}://${host}:${port}${path || ''}`
+  let credentials, headers, method, outputFile, failOnOutputFileError,
+    followRedirects, returnResponse, includeHeaders, data, httpVersion,
+    timeout, requestDelay, requestCount
   if (options) {
     if (options.username) {
       credentials = options
@@ -109,6 +118,9 @@ function makeRequest (protocol, host, port, path, options) {
       includeHeaders = options.includeHeaders
     } else if (options.data) {
       data = options.data
+      if (options.contentType) {
+        headers = { 'content-type': options.contentType }
+      }
     } else if (options.httpVersion) {
       httpVersion = options.httpVersion
     } else if (options.timeout) {
@@ -116,6 +128,9 @@ function makeRequest (protocol, host, port, path, options) {
     } else {
       headers = options
     }
+    followRedirects = options.followRedirects
+    requestDelay = options.requestDelay
+    requestCount = options.requestCount
   }
   const rejectUnauthorized = false
   return nettime(https || options
@@ -124,6 +139,7 @@ function makeRequest (protocol, host, port, path, options) {
         credentials,
         data,
         failOnOutputFileError,
+        followRedirects,
         headers,
         httpVersion,
         includeHeaders,
@@ -131,42 +147,74 @@ function makeRequest (protocol, host, port, path, options) {
         outputFile,
         rejectUnauthorized,
         returnResponse,
-        timeout
+        timeout,
+        requestDelay,
+        requestCount
       }
     : url)
     .then(checkRequest.bind(null, {
+      url,
       httpVersion,
       returnResponse,
-      includeHeaders
+      includeHeaders,
+      followRedirects,
+      requestCount
     }))
 }
 
 function checkRequest (options, result) {
   let resultCount = 4
-  test.equal(typeof result, 'object')
   if (options.returnResponse) {
     ++resultCount
   }
   if (options.includeHeaders) {
     ++resultCount
   }
-  test.equal(Object.keys(result).length, resultCount)
-  const httpVersion = options.httpVersion || '1.1'
-  if (httpVersion === '1.0') {
-    result.httpVersion = '1.0'
+  if (options.followRedirects) {
+    ++resultCount
+    test.ok(Array.isArray(result))
+    test.ok(result.length > 0)
+    if (result[0].statusCode === 302) {
+      test.equal(result.length, 2)
+      checkSingleRequest(result[0])
+      checkSingleRequest(result[1])
+    } else {
+      test.equal(result.length, 1)
+      checkSingleRequest(result[0])
+    }
+  } else if (options.requestCount) {
+    test.ok(Array.isArray(result))
+    test.equal(result.length, options.requestCount)
+    for (const singleResult of result) {
+      checkSingleRequest(singleResult)
+    }
+  } else {
+    test.equal(typeof result, 'object')
+    checkSingleRequest(result)
   }
-  test.equal(result.httpVersion, httpVersion)
-  test.equal(lastRequest.httpVersion, httpVersion)
-  const { timings } = result
-  test.equal(typeof timings, 'object')
-  checkTiming(timings.socketOpen)
-  const { tcpConnection, firstByte } = timings
-  checkTiming(tcpConnection)
-  checkTiming(firstByte)
-  checkTiming(timings.contentTransfer)
-  checkTiming(timings.socketClose)
-  test.ok(getTestDuration(tcpConnection, firstByte) >= 1e6)
   return result
+
+  function checkSingleRequest (result) {
+    if (options.followRedirects) {
+      test.ok(typeof result.url === 'string')
+    }
+    test.equal(Object.keys(result).length, resultCount)
+    const httpVersion = options.httpVersion || '1.1'
+    if (httpVersion === '1.0') {
+      result.httpVersion = '1.0'
+    }
+    test.equal(result.httpVersion, httpVersion)
+    test.equal(lastRequest.httpVersion, httpVersion)
+    const { timings } = result
+    test.equal(typeof timings, 'object')
+    checkTiming(timings.socketOpen)
+    const { tcpConnection, firstByte } = timings
+    checkTiming(tcpConnection)
+    checkTiming(firstByte)
+    checkTiming(timings.contentTransfer)
+    checkTiming(timings.socketClose)
+    test.ok(getTestDuration(tcpConnection, firstByte) >= 1e6)
+  }
 }
 
 function getTestDuration (start, end) {
@@ -219,10 +267,9 @@ test.test('test a full URL without password', test => {
 })
 
 test.test('test two requests', test => {
-  return nettime({
-    url: `http://localhost:${insecurePort}`,
-    requestCount: 2,
-    requestDelay: 1
+  return makeRequest('http', ipAddress, insecurePort, '/', {
+    outputFile: 'test.out',
+    requestCount: 2
   })
     .then(results => {
       test.ok(Array.isArray(results))
@@ -231,6 +278,20 @@ test.test('test two requests', test => {
         test.equal(result.statusCode, 204)
         test.equal(result.statusMessage, 'No Content')
       }
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
+test.test('test two requests with delay', test => {
+  const start = new Date().getTime()
+  return makeRequest('http', ipAddress, insecurePort, '/', {
+    requestCount: 2,
+    requestDelay: 10
+  })
+    .then(() => {
+      const end = new Date().getTime()
+      test.ok(start + 10 < end)
     })
     .catch(test.threw)
     .then(test.end)
@@ -487,6 +548,55 @@ test.test('test posting data', test => {
     .then(test.end)
 })
 
+test.test('test posting data with content type', test => {
+  return makeRequest('http', ipAddress, insecurePort, '/upload', {
+    data: 'test=ok',
+    contentType: 'application/x-www-form-urlencoded'
+  })
+    .then(() => {
+      test.equal(lastRequest.method, 'POST')
+      test.equal(lastRequest.data, 'test=ok')
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
+test.test('test not followed redirect', test => {
+  return makeRequest('http', ipAddress, insecurePort, '/redirect')
+    .then(result => {
+      test.equal(result.statusCode, 302)
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
+test.test('test followed redirect', test => {
+  return makeRequest('http', ipAddress, insecurePort, '/redirect', {
+    followRedirects: true
+  })
+    .then(result => {
+      test.ok(Array.isArray(result))
+      test.equal(result.length, 2)
+      test.equal(result[0].statusCode, 302)
+      test.equal(result[1].statusCode, 200)
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
+test.test('test no redirection with following redirect enabled', test => {
+  return makeRequest('http', ipAddress, insecurePort, '/download', {
+    followRedirects: true
+  })
+    .then(result => {
+      test.ok(Array.isArray(result))
+      test.equal(result.length, 1)
+      test.equal(result[0].statusCode, 200)
+    })
+    .catch(test.threw)
+    .then(test.end)
+})
+
 test.test('test HTTP 1.0', test => {
   return makeRequest('http', ipAddress, insecurePort, '/download', {
     httpVersion: '1.0'
@@ -523,8 +633,10 @@ test.test('stop testing servers', test => {
   test.end()
 })
 
-test.test('test timing methods duration', test => {
+test.test('test carried exported methods', test => {
+  test.equal(exported, nettime)
   test.equal(nettime.getDuration, getDuration)
   test.equal(nettime.getMilliseconds, getMilliseconds)
+  test.equal(nettime.isRedirect, isRedirect)
   test.end()
 })

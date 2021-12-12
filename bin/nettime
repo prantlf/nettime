@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const commander = require('commander')
-const nettime = require('..')
+const { nettime, isRedirect } = require('..')
 const { version, description } = require('../package.json')
 const {
   computeAverageDurations, createTimingsFromDurations
@@ -23,6 +23,7 @@ commander
   .option('-i, --include', 'include response headers in the output')
   .option('-I, --head', 'use HEAD verb to get document info only')
   .option('-k, --insecure', 'ignore certificate errors')
+  .option('-L, --location', 'follow redirects')
   .option('-o, --output <file>', 'write the received data to a file')
   .option('-t, --time-unit <unit>', 'set time unit: ms, s+ns')
   .option('-u, --user <credentials>', 'credentials for Basic Authentication')
@@ -106,7 +107,8 @@ if (credentials) {
 
 const {
   connectTimeout: timeout, data, head, include: includeHeaders, insecure,
-  output: outputFile, request, requestCount, requestDelay, averageTimings
+  output: outputFile, request, requestCount, requestDelay, averageTimings,
+  location: followRedirects
 } = options
 const httpVersion = options.http2 ? '2.0' : options['http1.0'] ? '1.0' : '1.1'
 const method = request || (head ? 'HEAD' : data ? 'POST' : 'GET')
@@ -126,21 +128,30 @@ nettime({
   rejectUnauthorized,
   timeout,
   requestCount,
-  requestDelay
+  requestDelay,
+  followRedirects
 })
   .then(results => {
     if (requestCount > 1) {
       if (averageTimings) {
-        const result = computeAverageTimings(results)
-        results = [result]
+        if (followRedirects) {
+          results = computeRedirectableAverageTimings(results)
+        } else {
+          const result = computeAverageTimings(results)
+          results = [result]
+        }
       }
-    } else {
+    } else if (!followRedirects) {
       results = [results]
     }
     return results
   })
   .then(results => {
     for (const result of results) {
+      if (followRedirects) {
+        console.log('URL:', result.url)
+        console.log()
+      }
       console.log(formatter(result))
       console.log()
     }
@@ -189,5 +200,59 @@ function computeAverageTimings (results) {
     const { httpVersion, statusCode, statusMessage } = firstResult
     const timings = createTimingsFromDurations(averageDurations)
     return { timings, httpVersion, statusCode, statusMessage }
+  }
+}
+
+function computeRedirectableAverageTimings (results) {
+  checkStatusCodes()
+  const resultsByURL = collectResults()
+  const durationsByURL = collectAverageDurations()
+  return createAverageResult()
+
+  function checkStatusCodes () {
+    let firstStatusCode
+    for (const { statusCode } of results) {
+      if (isRedirect(statusCode)) continue
+      if (firstStatusCode === undefined) {
+        firstStatusCode = statusCode
+      } else {
+        if (firstStatusCode !== statusCode) {
+          throw new Error(`Status code of the first request was ${firstStatusCode}, but ${statusCode} was received later.`)
+        }
+      }
+    }
+  }
+
+  function collectResults () {
+    const resultsByURL = {}
+    for (const result of results) {
+      const { url } = result
+      const results = resultsByURL[url] || (resultsByURL[url] = [])
+      results.push(result)
+    }
+    return resultsByURL
+  }
+
+  function collectAverageDurations () {
+    const durationsByURL = {}
+    for (const url in resultsByURL) {
+      const timings = resultsByURL[url].map(({ timings }) => timings)
+      durationsByURL[url] = computeAverageDurations(timings)
+    }
+    return durationsByURL
+  }
+
+  function createAverageResult () {
+    const results = []
+    for (const url in resultsByURL) {
+      const result = extractResult(resultsByURL[url][0])
+      const timings = createTimingsFromDurations(durationsByURL[url])
+      results.push({ ...result, timings })
+    }
+    return results
+
+    function extractResult ({ url, httpVersion, statusCode, statusMessage }) {
+      return { url, httpVersion, statusCode, statusMessage }
+    }
   }
 }
