@@ -1,4 +1,5 @@
-const test = require('tap')
+const test = require('tehanu')(__filename)
+const { ok } = require('assert')
 const printTimings = require('../lib/printer')
 
 const example = {
@@ -17,30 +18,26 @@ const example = {
 }
 const { timings } = example
 
-test.test('test printing seconds', test => {
+test('test printing seconds', () => {
   const output = printTimings(timings, 's')
-  test.ok(/\ds/.test(output))
-  test.ok(!/\dms/.test(output))
-  test.end()
+  ok(/\ds/.test(output), 'seconds')
+  ok(!/\dms/.test(output), 'not milliseconds')
 })
 
-test.test('test printing seconds and nanoseconds', test => {
+test('test printing seconds and nanoseconds', () => {
   const output = printTimings(timings, 's+ns')
-  test.ok(/\ds/.test(output))
-  test.ok(/\dms/.test(output))
-  test.end()
+  ok(/\ds/.test(output), 'seconds')
+  ok(/\dms/.test(output), 'milliseconds')
 })
 
-test.test('test printing seconds with incomplete timing', test => {
+test('test printing seconds with incomplete timing', () => {
   const timings2 = timings
   delete timings2.tlsHandshake
   printTimings(timings2, 's')
-  test.end()
 })
 
-test.test('test printing nanoseconds with incomplete timing', test => {
+test('test printing nanoseconds with incomplete timing', () => {
   const timings2 = timings
   delete timings2.tlsHandshake
   printTimings(timings2, 's+ns')
-  test.end()
 })

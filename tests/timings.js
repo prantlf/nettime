@@ -1,4 +1,5 @@
-const test = require('tap')
+const test = require('tehanu')(__filename)
+const { deepStrictEqual, fail } = require('assert')
 const {
   events, getDuration, getMilliseconds, computeAverageDurations, createTimingsFromDurations
 } = require('../lib/timings')
@@ -13,26 +14,23 @@ const eventCopy = {
   socketClose: 'Socket Close'
 }
 
-test.test('test timing event names', test => {
-  test.deepEqual(Object.keys(events), Object.keys(eventCopy))
-  test.deepEqual(Object.values(events), Object.values(eventCopy))
-  test.end()
+test('test timing event names', () => {
+  deepStrictEqual(Object.keys(events), Object.keys(eventCopy))
+  deepStrictEqual(Object.values(events), Object.values(eventCopy))
 })
 
-test.test('test getting duration', test => {
-  test.deepEqual(getDuration([0, 100], [0, 200]), [0, 100])
-  test.deepEqual(getDuration([0, 100], [1, 200]), [1, 100])
-  test.deepEqual(getDuration([0, 200], [1, 100]), [0, 999999900])
-  test.end()
+test('test getting duration', () => {
+  deepStrictEqual(getDuration([0, 100], [0, 200]), [0, 100])
+  deepStrictEqual(getDuration([0, 100], [1, 200]), [1, 100])
+  deepStrictEqual(getDuration([0, 200], [1, 100]), [0, 999999900])
 })
 
-test.test('test getting milliseconds', test => {
-  test.deepEqual(getMilliseconds([0, 1e6]), 1)
-  test.deepEqual(getMilliseconds([1, 1000]), 1000.001)
-  test.end()
+test('test getting milliseconds', () => {
+  deepStrictEqual(getMilliseconds([0, 1e6]), 1)
+  deepStrictEqual(getMilliseconds([1, 1000]), 1000.001)
 })
 
-test.test('test computing average durations', test => {
+test('test computing average durations', () => {
   const input = [
     {
       socketOpen: [0, 100],
@@ -53,11 +51,10 @@ test.test('test computing average durations', test => {
     socketClose: undefined
   }
   const actual = computeAverageDurations(input)
-  test.deepEqual(actual, expected)
-  test.end()
+  deepStrictEqual(actual, expected)
 })
 
-test.test('test checking unexpected defined event timings', test => {
+test('test checking unexpected defined event timings', () => {
   const input = [
     {
       socketOpen: [0, 100],
@@ -71,13 +68,13 @@ test.test('test checking unexpected defined event timings', test => {
   ]
   try {
     computeAverageDurations(input)
-    test.fail()
-  } catch (error) {
+    fail('unexpected event timings')
+  } catch {
+    /* ignored */
   }
-  test.end()
 })
 
-test.test('test checking unexpected undefined event timings', test => {
+test('test checking unexpected undefined event timings', () => {
   const input = [
     {
       socketOpen: [0, 100],
@@ -91,13 +88,13 @@ test.test('test checking unexpected undefined event timings', test => {
   ]
   try {
     computeAverageDurations(input)
-    test.fail()
-  } catch (error) {
+    fail('unexpected undefined event timings')
+  } catch {
+    /* ignored */
   }
-  test.end()
 })
 
-test.test('test creating timings from durations', test => {
+test('test creating timings from durations', () => {
   const input = {
     socketOpen: [0, 100],
     dnsLookup: undefined,
@@ -112,6 +109,5 @@ test.test('test creating timings from durations', test => {
     tcpConnection: [0.5, 200]
   }
   const actual = createTimingsFromDurations(input)
-  test.deepEqual(actual, expected)
-  test.end()
+  deepStrictEqual(actual, expected)
 })

@@ -8,8 +8,9 @@ try {
 }
 const https = require('https')
 const { join } = require('path')
-const test = require('tap')
-const exported = require('..')
+const test = require('tehanu')(__filename)
+const { equal, fail, ok, strictEqual } = require('assert')
+const exported = require('nettime')
 const { nettime, isRedirect } = exported
 const { getDuration, getMilliseconds } = require('../lib/timings')
 
@@ -27,7 +28,7 @@ function createServer (protocol, port, options) {
       const server = options ? creator(options, serve) : protocol.createServer(serve)
       server
         .on('error', reject)
-        .listen(port, ipAddress, () => {
+        .listen(port, '::', () => {
           servers.push(server)
           resolve()
         })
@@ -172,48 +173,48 @@ function checkRequest (options, result) {
   }
   if (options.followRedirects) {
     ++resultCount
-    test.ok(Array.isArray(result))
-    test.ok(result.length > 0)
+    ok(Array.isArray(result))
+    ok(result.length > 0)
     if (result[0].statusCode === 302) {
-      test.equal(result.length, 2)
+      strictEqual(result.length, 2)
       checkSingleRequest(result[0])
       checkSingleRequest(result[1])
     } else {
-      test.equal(result.length, 1)
+      strictEqual(result.length, 1)
       checkSingleRequest(result[0])
     }
   } else if (options.requestCount) {
-    test.ok(Array.isArray(result))
-    test.equal(result.length, options.requestCount)
+    ok(Array.isArray(result))
+    strictEqual(result.length, options.requestCount)
     for (const singleResult of result) {
       checkSingleRequest(singleResult)
     }
   } else {
-    test.equal(typeof result, 'object')
+    strictEqual(typeof result, 'object')
     checkSingleRequest(result)
   }
   return result
 
   function checkSingleRequest (result) {
     if (options.followRedirects) {
-      test.ok(typeof result.url === 'string')
+      ok(typeof result.url === 'string')
     }
-    test.equal(Object.keys(result).length, resultCount)
+    strictEqual(Object.keys(result).length, resultCount)
     const httpVersion = options.httpVersion || '1.1'
     if (httpVersion === '1.0') {
       result.httpVersion = '1.0'
     }
-    test.equal(result.httpVersion, httpVersion)
-    test.equal(lastRequest.httpVersion, httpVersion)
+    strictEqual(result.httpVersion, httpVersion)
+    strictEqual(lastRequest.httpVersion, httpVersion)
     const { timings } = result
-    test.equal(typeof timings, 'object')
+    strictEqual(typeof timings, 'object')
     checkTiming(timings.socketOpen)
     const { tcpConnection, firstByte } = timings
     checkTiming(tcpConnection)
     checkTiming(firstByte)
     checkTiming(timings.contentTransfer)
     checkTiming(timings.socketClose)
-    test.ok(getTestDuration(tcpConnection, firstByte) >= 1e6)
+    ok(getTestDuration(tcpConnection, firstByte) >= 1e6)
   }
 }
 
@@ -228,415 +229,314 @@ function getTestDuration (start, end) {
 }
 
 function checkTiming (timing) {
-  test.ok(Array.isArray(timing))
-  test.equal(timing.length, 2)
-  test.equal(typeof timing[0], 'number')
-  test.equal(typeof timing[1], 'number')
+  ok(Array.isArray(timing))
+  strictEqual(timing.length, 2)
+  strictEqual(typeof timing[0], 'number')
+  strictEqual(typeof timing[1], 'number')
 }
 
 function checkNull (timing) {
-  test.same(timing, null)
+  equal(timing, null)
 }
 
-test.equal(typeof nettime, 'function')
+strictEqual(typeof nettime, 'function')
 
-test.test('start testing servers', test => {
-  startServers()
-    .then(test.end)
-    .catch(test.threw)
+test('start testing servers', async () => {
+  await startServers()
 })
 
-test.test('test a full URL', test => {
-  return makeRequest('http', 'user:pass@localhost', insecurePort, '?search#hash')
-    .then(result => {
-      test.equal(result.statusCode, 404)
-      test.equal(result.statusMessage, 'Not Found')
-    })
-    .catch(test.threw)
-    .then(test.end)
+test('test a full URL', async () => {
+  const result = await makeRequest('http', 'user:pass@localhost', insecurePort, '?search#hash')
+  strictEqual(result.statusCode, 404)
+  strictEqual(result.statusMessage, 'Not Found')
 })
 
-test.test('test a full URL without password', test => {
-  return makeRequest('http', 'user@localhost', insecurePort, '?search#hash')
-    .then(result => {
-      test.equal(result.statusCode, 404)
-      test.equal(result.statusMessage, 'Not Found')
-    })
-    .catch(test.threw)
-    .then(test.end)
+test('test a full URL without password', async () => {
+  const result = await makeRequest('http', 'user@localhost', insecurePort, '?search#hash')
+  strictEqual(result.statusCode, 404)
+  strictEqual(result.statusMessage, 'Not Found')
 })
 
-test.test('test two requests', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/', {
+test('test two requests', async () => {
+  const results = await makeRequest('http', ipAddress, insecurePort, '/', {
     outputFile: 'test.out',
     requestCount: 2
   })
-    .then(results => {
-      test.ok(Array.isArray(results))
-      for (const result of results) {
-        checkRequest({}, result)
-        test.equal(result.statusCode, 204)
-        test.equal(result.statusMessage, 'No Content')
-      }
-    })
-    .catch(test.threw)
-    .then(test.end)
+  ok(Array.isArray(results))
+  for (const result of results) {
+    checkRequest({}, result)
+    strictEqual(result.statusCode, 204)
+    strictEqual(result.statusMessage, 'No Content')
+  }
 })
 
-test.test('test two requests with delay', test => {
+test('test two requests with delay', async () => {
   const start = new Date().getTime()
-  return makeRequest('http', ipAddress, insecurePort, '/', {
+  await makeRequest('http', ipAddress, insecurePort, '/', {
     requestCount: 2,
     requestDelay: 10
   })
-    .then(() => {
-      const end = new Date().getTime()
-      test.ok(start + 10 < end)
-    })
-    .catch(test.threw)
-    .then(test.end)
+  const end = new Date().getTime()
+  ok(start + 10 < end)
 })
 
-test.test('test with a hostname', test => {
-  return makeRequest('http', 'localhost', insecurePort)
-    .then(result => {
-      const timings = result.timings
-      test.equal(result.statusCode, 204)
-      test.equal(result.statusMessage, 'No Content')
-      test.equal(Object.keys(timings).length, 6)
-      checkTiming(timings.dnsLookup)
-      checkNull(timings.tlsHandshake)
-    })
-    .catch(test.threw)
-    .then(test.end)
+test('test with a hostname', async () => {
+  const result = await makeRequest('http', 'localhost', insecurePort)
+  const timings = result.timings
+  strictEqual(result.statusCode, 204)
+  strictEqual(result.statusMessage, 'No Content')
+  strictEqual(Object.keys(timings).length, 6)
+  checkTiming(timings.dnsLookup)
+  checkNull(timings.tlsHandshake)
 })
 
-test.test('test with an IP address', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download')
-    .then(result => {
-      const timings = result.timings
-      test.equal(result.statusCode, 200)
-      test.equal(result.statusMessage, 'OK')
-      test.equal(Object.keys(timings).length, 5)
-      checkNull(timings.dnsLookup)
-      checkNull(timings.tlsHandshake)
-    })
-    .catch(test.threw)
-    .then(test.end)
+test('test with an IP address', async () => {
+  const result = await makeRequest('http', ipAddress, insecurePort, '/download')
+  const timings = result.timings
+  strictEqual(result.statusCode, 200)
+  strictEqual(result.statusMessage, 'OK')
+  strictEqual(Object.keys(timings).length, 5)
+  checkNull(timings.dnsLookup)
+  checkNull(timings.tlsHandshake)
 })
 
-test.test('test with the HTTPS protocol', test => {
-  return makeRequest('https', ipAddress, securePort)
-    .then(result => {
-      const timings = result.timings
-      test.equal(result.statusCode, 204)
-      test.equal(Object.keys(timings).length, 6)
-      checkNull(timings.dnsLookup)
-      checkTiming(timings.tlsHandshake)
-    })
-    .catch(test.threw)
-    .then(test.end)
+test('test with the HTTPS protocol', async () => {
+  const result = await makeRequest('https', ipAddress, securePort)
+  const timings = result.timings
+  strictEqual(result.statusCode, 204)
+  strictEqual(Object.keys(timings).length, 6)
+  checkNull(timings.dnsLookup)
+  checkTiming(timings.tlsHandshake)
 })
 
-test.test('test with a missing web page', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/missing')
-    .then(result => {
-      const timings = result.timings
-      test.equal(result.statusCode, 404)
-      test.equal(result.statusMessage, 'Not Found')
-      test.equal(Object.keys(timings).length, 5)
-      checkNull(timings.dnsLookup)
-      checkNull(timings.tlsHandshake)
-    })
-    .catch(test.threw)
-    .then(test.end)
+test('test with a missing web page', async () => {
+  const result = await makeRequest('http', ipAddress, insecurePort, '/missing')
+  const timings = result.timings
+  strictEqual(result.statusCode, 404)
+  strictEqual(result.statusMessage, 'Not Found')
+  strictEqual(Object.keys(timings).length, 5)
+  checkNull(timings.dnsLookup)
+  checkNull(timings.tlsHandshake)
 })
 
-test.test('test failed connection to a not responding host', test => {
+test('test failed connection to a not responding host', async () => {
   const start = new Date().getTime()
-  return makeRequest('http', '192.0.2.1', 80, '/', {
-    timeout: 10
-  })
-    .then(test.fail)
-    .catch(error => {
-      const end = new Date().getTime()
-      test.ok(start + 9 < end)
-      test.ok(error instanceof Error)
-      test.equal(error.code, 'ETIMEDOUT')
+  try {
+    await makeRequest('http', '192.0.2.1', 80, '/', {
+      timeout: 10
     })
-    .catch(test.threw)
-    .then(test.end)
+    fail('not responding host')
+  } catch (error) {
+    const end = new Date().getTime()
+    ok(start + 9 < end)
+    ok(error instanceof Error)
+    strictEqual(error.code, 'ETIMEDOUT')
+  }
 })
 
-test.test('test response timeout', test => {
-  return makeRequest('http', ipAddress, insecurePort, '', {
-    timeout: 1
-  })
-    .then(test.fail)
-    .catch(error => {
-      test.ok(error instanceof Error)
-      test.equal(error.code, 'ETIMEDOUT')
+test('test response timeout', async () => {
+  try {
+    await makeRequest('http', ipAddress, insecurePort, '', {
+      timeout: 1
     })
-    .catch(test.threw)
-    .then(test.end)
+    fail('response timeout')
+  } catch (error) {
+    ok(error instanceof Error)
+    strictEqual(error.code, 'ETIMEDOUT')
+  }
 })
 
-test.test('test with an invalid URL', test => {
-  return makeRequest('dummy', ipAddress, 1)
-    .then(test.fail)
-    .catch(error => {
-      test.ok(error instanceof Error)
-      test.ok(error.message.indexOf('dummy:') > 0)
-    })
-    .catch(test.threw)
-    .then(test.end)
+test('test with an invalid URL', async () => {
+  try {
+    await makeRequest('dummy', ipAddress, 1)
+    fail('invalid URL')
+  } catch (error) {
+    ok(error instanceof Error)
+    ok(error.message.indexOf('dummy:') > 0)
+  }
 })
 
-test.test('test with custom headers', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test with custom headers', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/download', {
     TestHeader: 'Test value'
   })
-    .then(() => {
-      const headers = lastRequest.headers
-      test.ok(headers)
-      test.equal(Object.keys(headers).length, 3)
-      test.equal(headers.connection, 'close')
-      test.equal(headers.host, '127.0.0.1:8899')
-      test.equal(headers.testheader, 'Test value')
-    })
-    .catch(test.threw)
-    .then(test.end)
+  const headers = lastRequest.headers
+  ok(headers)
+  strictEqual(Object.keys(headers).length, 3)
+  strictEqual(headers.connection, 'close')
+  strictEqual(headers.host, '127.0.0.1:8899')
+  strictEqual(headers.testheader, 'Test value')
 })
 
-test.test('test with credentials', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test with credentials', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/download', {
     username: 'guest',
     password: 'secret'
   })
-    .then(() => {
-      const headers = lastRequest.headers
-      test.ok(headers)
-      test.equal(Object.keys(headers).length, 3)
-      test.equal(headers.connection, 'close')
-      test.equal(headers.host, '127.0.0.1:8899')
-      test.equal(headers.authorization, 'Basic Z3Vlc3Q6c2VjcmV0')
-    })
-    .catch(test.threw)
-    .then(test.end)
+  const headers = lastRequest.headers
+  ok(headers)
+  strictEqual(Object.keys(headers).length, 3)
+  strictEqual(headers.connection, 'close')
+  strictEqual(headers.host, '127.0.0.1:8899')
+  strictEqual(headers.authorization, 'Basic Z3Vlc3Q6c2VjcmV0')
 })
 
-test.test('test with the HEAD verb', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test with the HEAD verb', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/download', {
     method: 'HEAD'
   })
-    .then(() => {
-      test.equal(lastRequest.method, 'HEAD')
-    })
-    .catch(test.threw)
-    .then(test.end)
+  strictEqual(lastRequest.method, 'HEAD')
 })
 
-test.test('test returning of received data', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test returning of received data', async () => {
+  const result = await makeRequest('http', ipAddress, insecurePort, '/download', {
     returnResponse: true
   })
-    .then(result => {
-      const response = result.response
-      test.ok(!result.headers)
-      test.ok(response)
-      test.equal(response.length, 4)
-    })
-    .catch(test.threw)
-    .then(test.end)
+  const response = result.response
+  ok(!result.headers)
+  ok(response)
+  strictEqual(response.length, 4)
 })
 
-test.test('test returning of received data with headers', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test returning of received data with headers', async () => {
+  const result = await makeRequest('http', ipAddress, insecurePort, '/download', {
     returnResponse: true,
     includeHeaders: true
   })
-    .then(result => {
-      const response = result.response
-      const headers = result.headers
-      test.ok(headers)
-      test.equal(headers.test, 'ok')
-      test.ok(response)
-      test.equal(response.length, 4)
-    })
-    .catch(test.threw)
-    .then(test.end)
+  const response = result.response
+  const headers = result.headers
+  ok(headers)
+  strictEqual(headers.test, 'ok')
+  ok(response)
+  strictEqual(response.length, 4)
 })
 
-test.test('test returning of received headers alone', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test returning of received headers alone', async () => {
+  const result = await makeRequest('http', ipAddress, insecurePort, '/download', {
     includeHeaders: true
   })
-    .then(result => {
-      const headers = result.headers
-      test.ok(headers)
-      test.equal(headers.test, 'ok')
-      test.ok(!result.response)
-    })
-    .catch(test.threw)
-    .then(test.end)
+  const headers = result.headers
+  ok(headers)
+  strictEqual(headers.test, 'ok')
+  ok(!result.response)
 })
 
-test.test('test writing an output file', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test writing an output file', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/download', {
     outputFile: 'test.out'
   })
-    .then(result => {
-      const stat = statSync('test.out')
-      test.ok(stat)
-      test.equal(stat.size, 4)
-      unlinkSync('test.out')
-    })
-    .catch(test.threw)
-    .then(test.end)
+  const stat = statSync('test.out')
+  ok(stat)
+  strictEqual(stat.size, 4)
+  unlinkSync('test.out')
 })
 
-test.test('test writing an output file with headers', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test writing an output file with headers', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/download', {
     outputFile: 'test.out',
     includeHeaders: true
   })
-    .then(() => {
-      const stat = statSync('test.out')
-      test.ok(stat)
-      test.ok(stat.size > 4)
-      unlinkSync('test.out')
-    })
-    .catch(test.threw)
-    .then(test.end)
+  const stat = statSync('test.out')
+  ok(stat)
+  ok(stat.size > 4)
+  unlinkSync('test.out')
 })
 
-test.test('test failure when writing to an output file', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
-    outputFile: '/'
-  })
-    .then(test.fail)
-    .catch(error => {
-      test.ok(error instanceof Error)
-      test.equal(error.code, 'EISDIR')
+test('test failure when writing to an output file', async () => {
+  try {
+    await makeRequest('http', ipAddress, insecurePort, '/download', {
+      outputFile: '/'
     })
-    .catch(test.threw)
-    .then(test.end)
+    fail('writing an output file')
+  } catch (error) {
+    ok(error instanceof Error)
+    strictEqual(error.code, 'EISDIR')
+  }
 })
 
-test.test('test an ignored failure when writing to an output file', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test an ignored failure when writing to an output file', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/download', {
     outputFile: '/',
     failOnOutputFileError: false
   })
-    .then(() => {
-      test.equal(process.exitCode, 2)
-      process.exitCode = 0
-    })
-    .catch(test.threw)
-    .then(test.end)
+  strictEqual(process.exitCode, 2)
+  process.exitCode = 0
 })
 
-test.test('test posting data', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/upload', {
+test('test posting data', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/upload', {
     data: 'test=ok'
   })
-    .then(() => {
-      test.equal(lastRequest.method, 'POST')
-      test.equal(lastRequest.data, 'test=ok')
-    })
-    .catch(test.threw)
-    .then(test.end)
+  strictEqual(lastRequest.method, 'POST')
+  strictEqual(lastRequest.data, 'test=ok')
 })
 
-test.test('test posting data with content type', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/upload', {
+test('test posting data with content type', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/upload', {
     data: 'test=ok',
     contentType: 'application/x-www-form-urlencoded'
   })
-    .then(() => {
-      test.equal(lastRequest.method, 'POST')
-      test.equal(lastRequest.data, 'test=ok')
-    })
-    .catch(test.threw)
-    .then(test.end)
+  strictEqual(lastRequest.method, 'POST')
+  strictEqual(lastRequest.data, 'test=ok')
 })
 
-test.test('test not followed redirect', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/redirect')
-    .then(result => {
-      test.equal(result.statusCode, 302)
-    })
-    .catch(test.threw)
-    .then(test.end)
+test('test not followed redirect', async () => {
+  const result = await makeRequest('http', ipAddress, insecurePort, '/redirect')
+  strictEqual(result.statusCode, 302)
 })
 
-test.test('test followed redirect', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/redirect', {
+test('test followed redirect', async () => {
+  const result = await makeRequest('http', ipAddress, insecurePort, '/redirect', {
     followRedirects: true
   })
-    .then(result => {
-      test.ok(Array.isArray(result))
-      test.equal(result.length, 2)
-      test.equal(result[0].statusCode, 302)
-      test.equal(result[1].statusCode, 200)
-    })
-    .catch(test.threw)
-    .then(test.end)
+  ok(Array.isArray(result))
+  strictEqual(result.length, 2)
+  strictEqual(result[0].statusCode, 302)
+  strictEqual(result[1].statusCode, 200)
 })
 
-test.test('test no redirection with following redirect enabled', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test no redirection with following redirect enabled', async () => {
+  const result = await makeRequest('http', ipAddress, insecurePort, '/download', {
     followRedirects: true
   })
-    .then(result => {
-      test.ok(Array.isArray(result))
-      test.equal(result.length, 1)
-      test.equal(result[0].statusCode, 200)
-    })
-    .catch(test.threw)
-    .then(test.end)
+  ok(Array.isArray(result))
+  strictEqual(result.length, 1)
+  strictEqual(result[0].statusCode, 200)
 })
 
-test.test('test HTTP 1.0', test => {
-  return makeRequest('http', ipAddress, insecurePort, '/download', {
+test('test HTTP 1.0', async () => {
+  await makeRequest('http', ipAddress, insecurePort, '/download', {
     httpVersion: '1.0'
   })
-    .catch(test.threw)
-    .then(test.end)
 })
 
 if (http2) {
-  test.test('test HTTP 2.0 with the http scheme', test => {
-    return makeRequest('http', ipAddress, http2Port, '/download', {
-      httpVersion: '2.0'
-    })
-      .then(test.fail)
-      .catch(error => {
-        test.ok(error instanceof Error)
-        test.equal(error.code, 'ERR_INSECURE_SCHEME')
+  test('test HTTP 2.0 with the http scheme', async () => {
+    try {
+      await makeRequest('http', ipAddress, http2Port, '/download', {
+        httpVersion: '2.0'
       })
-      .catch(test.threw)
-      .then(test.end)
+      fail('HTTP 2.0 with the http scheme')
+    } catch (error) {
+      ok(error instanceof Error)
+      strictEqual(error.code, 'ERR_INSECURE_SCHEME')
+    }
   })
 
-  test.test('test HTTP 2.0 with the https scheme', test => {
-    return makeRequest('https', ipAddress, http2Port, '/download', {
+  test('test HTTP 2.0 with the https scheme', async () => {
+    await makeRequest('https', ipAddress, http2Port, '/download', {
       httpVersion: '2.0'
     })
-      .catch(test.threw)
-      .then(test.end)
   })
 }
 
-test.test('stop testing servers', test => {
+test('stop testing servers', () => {
   stopServers()
-  test.end()
 })
 
-test.test('test carried exported methods', test => {
-  test.equal(exported, nettime)
-  test.equal(nettime.getDuration, getDuration)
-  test.equal(nettime.getMilliseconds, getMilliseconds)
-  test.equal(nettime.isRedirect, isRedirect)
-  test.end()
+test('test carried exported methods', () => {
+  strictEqual(exported, nettime)
+  strictEqual(nettime.getDuration, getDuration)
+  strictEqual(nettime.getMilliseconds, getMilliseconds)
+  strictEqual(nettime.isRedirect, isRedirect)
 })

@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 declare interface NettimeOptions {
   url: string
   credentials?: NettimeRequestCredentials
   method?: string
-  headers?: object
+  headers?: Record<string, unknown>
   timeout?: number
   followRedirects?: boolean
   rejectUnauthorized?: boolean
@@ -13,10 +11,10 @@ declare interface NettimeOptions {
   outputFile?: string
   returnResponse?: boolean
   includeHeaders?: boolean
-  appendToOutput?: any
+  appendToOutput?: unknown
   failOnOutputFileError?: boolean
   httpVersion?: string
-  data?: any
+  data?: unknown
 }
 
 declare interface NettimeRequestCredentials {
@@ -30,7 +28,7 @@ declare interface NettimeResponse {
   httpVersion: string
   statusCode: number
   statusMessage: string
-  headers?: object
+  headers?: Record<string, unknown>
   response?: Buffer
 }
 
