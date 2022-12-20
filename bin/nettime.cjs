@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 const commander = require('commander')
-const { nettime, isRedirect } = require('..')
+const { nettime, isRedirect } = require('../lib/nettime.cjs')
 const { version, description } = require('../package.json')
 const {
   computeAverageDurations, createTimingsFromDurations
-} = require('../lib/timings')
-const printTimings = require('../lib/printer')
+} = require('../lib/timings.cjs')
+const { printTimings } = require('../lib/printer.cjs')
 const readlineSync = require('readline-sync')
 
 commander

@@ -42,12 +42,8 @@ declare interface NettimeTimings {
   socketClose: number[]
 }
 
-declare function nettime(options: string | NettimeOptions): Promise<NettimeResponse>
-
-declare namespace nettime {
-  export function getDuration (start: number, end: number): number
-  export function getMilliseconds (timings: number[]): number
-  export function isRedirect (statusCode: number): boolean
-}
-
-export = nettime
+export default function nettime(options: string | NettimeOptions): Promise<NettimeResponse>
+export function nettime(options: string | NettimeOptions): Promise<NettimeResponse>
+export function getDuration (start: number, end: number): number
+export function getMilliseconds (timings: number[]): number
+export function isRedirect (statusCode: number): boolean

@@ -1,18 +1,16 @@
-const { readFileSync, statSync, unlinkSync } = require('fs')
-const http = require('http')
-let http2
-try {
-  http2 = require('http2')
-} catch (error) {
-  console.warn('Skipping HTTP 2 tests:', error.message)
-}
-const https = require('https')
-const { join } = require('path')
-const test = require('tehanu')(__filename)
-const { equal, fail, ok, strictEqual } = require('assert')
-const exported = require('nettime')
-const { nettime, isRedirect } = exported
-const { getDuration, getMilliseconds } = require('../lib/timings')
+import { readFileSync, statSync, unlinkSync } from 'fs'
+import http from 'http'
+import  http2 from 'http2'
+import https from 'https'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
+import tehanu from 'tehanu'
+import { equal, fail, ok, strictEqual } from 'assert'
+import { nettime, isRedirect } from 'nettime'
+import { getDuration, getMilliseconds } from '../lib/timings.js'
+
+const test = tehanu(import.meta.url)
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const ipAddress = '127.0.0.1'
 const insecurePort = 8899
@@ -535,7 +533,7 @@ test('stop testing servers', () => {
 })
 
 test('test carried exported methods', () => {
-  strictEqual(exported, nettime)
+  strictEqual(nettime.nettime, nettime)
   strictEqual(nettime.getDuration, getDuration)
   strictEqual(nettime.getMilliseconds, getMilliseconds)
   strictEqual(nettime.isRedirect, isRedirect)

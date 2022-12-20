@@ -23,12 +23,18 @@
     }
   ],
   "engines": {
-    "node": ">=12"
+    "node": ">=14.8"
   },
-  "main": "lib/nettime.js",
+  "type": "module",
+  "main": "lib/nettime.cjs",
+  "module": "lib/nettime.js",
+  "exports": {
+    "require": "./lib/nettime.cjs",
+    "import": "./lib/nettime.js"
+  },
   "types": "lib/nettime.d.ts",
   "bin": {
-    "nettime": "bin/nettime"
+    "nettime": "bin/nettime.cjs"
   },
   "files": [
     "bin",
@@ -36,8 +42,9 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "check": "teru-cjs tests/*.js",
-    "test": "denolint && c8 teru-cjs tests/*.js"
+    "prepare": "rollup -c && sed -i 's/exports.default = nettime;/module.exports = nettime;/' lib/nettime.cjs && sed -i 's/exports.\\(\\w*\\) = \\w*;//' lib/nettime.cjs",
+    "check": "teru-cjs tests/cjs.cjs && teru-esm tests/*.js",
+    "test": "denolint && tsc --noEmit tests/types.ts && teru-cjs tests/cjs.cjs && c8 teru-esm tests/*.js"
   },
   "release": {
     "plugins": [
@@ -73,9 +80,12 @@
   "devDependencies": {
     "@semantic-release/changelog": "6.0.2",
     "@semantic-release/git": "10.0.1",
+    "@types/node": "18.11.17",
     "c8": "7.12.0",
     "denolint": "2.0.5",
     "nettime": "link:",
+    "rollup": "3.7.5",
+    "rollup-plugin-cleanup": "3.2.1",
     "tehanu": "1.0.1",
     "tehanu-repo-coco": "1.0.0",
     "tehanu-teru": "1.0.0",

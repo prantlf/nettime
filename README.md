@@ -19,7 +19,7 @@ The programmatic interface did not change and has remained compatible.
 
 ## Command-line usage
 
-Make sure that you have [Node.js] >= 12 installed. Install the `nettime` package globally and print timings of a sample web site:
+Make sure that you have [Node.js] >= 14.8 installed. Install the `nettime` package globally and print timings of a sample web site:
 
 ```bash
 $ npm install -g nettime
@@ -76,7 +76,7 @@ Examples:
 
 ## Programmatic usage
 
-Make sure that you use [Node.js] >= 12. Install the `nettime` package locally and get time duration of waiting for the response and downloading the content of a sample web page:
+Make sure that you use [Node.js] >= 14.8. Install the `nettime` package locally and get time duration of waiting for the response and downloading the content of a sample web page:
 
 ```bash
 npm install --save nettime

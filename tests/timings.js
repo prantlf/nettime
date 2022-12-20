@@ -1,8 +1,10 @@
-const test = require('tehanu')(__filename)
-const { deepStrictEqual, fail } = require('assert')
-const {
+import tehanu from 'tehanu'
+import { deepStrictEqual, fail } from 'assert'
+import {
   events, getDuration, getMilliseconds, computeAverageDurations, createTimingsFromDurations
-} = require('../lib/timings')
+} from '../lib/timings.js'
+
+const test = tehanu(import.meta.url)
 
 const eventCopy = {
   socketOpen: 'Socket Open',

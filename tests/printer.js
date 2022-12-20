@@ -1,6 +1,8 @@
-const test = require('tehanu')(__filename)
-const { ok } = require('assert')
-const printTimings = require('../lib/printer')
+import tehanu from 'tehanu'
+import { ok } from 'assert'
+import { printTimings } from '../lib/printer.js'
+
+const test = tehanu(import.meta.url)
 
 const example = {
   timings: {
