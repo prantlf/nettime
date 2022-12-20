@@ -1,9 +1,9 @@
 # nettime
 
-[![npm](https://img.shields.io/npm/v//nettime)](https://www.npmjs.com/package//nettime#top)
-[![codecov](https://codecov.io/gh/prantlf//nettime/branch/master/graph/badge.svg)](https://codecov.io/gh/prantlf//nettime)
+[![npm](https://img.shields.io/npm/v/nettime)](https://www.npmjs.com/package/nettime#top)
+[![codecov](https://codecov.io/gh/prantlf/nettime/branch/master/graph/badge.svg)](https://codecov.io/gh/prantlf/nettime)
 [![codebeat badge](https://codebeat.co/badges/9d85c898-df08-42fb-8ab9-407dc2ce2d22)](https://codebeat.co/projects/github-com-prantlf-/nettime-master)
-![Dependency status](https://img.shields.io/librariesio/release/npm//nettime)
+![Dependency status](https://img.shields.io/librariesio/release/npm/nettime)
 
 Prints time duration of various stages of a HTTP/S request, like DNS lookup, TLS handshake, Time to First Byte etc. Similarly to the [time] command, which measures process timings, the `nettime` command measures HTTP/S request timings.  You can find more information in [Understanding & Measuring HTTP Timings with Node.js](https://blog.risingstack.com/measuring-http-timings-node-js/).
 
