@@ -1,3 +1,21 @@
+# [5.0.0](https://github.com/prantlf/nettime/compare/v4.0.0...v5.0.0) (2022-12-20)
+
+
+### Bug Fixes
+
+* Replace commander with simple command-line parsing ([2f140c6](https://github.com/prantlf/nettime/commit/2f140c64fecb0d3289e76af669d8133af45b281a))
+
+
+### Features
+
+* Provide native ESM export ([6aa74c7](https://github.com/prantlf/nettime/commit/6aa74c754bdee75ee8566fc5a783330e85d77e7e))
+
+
+### BREAKING CHANGES
+
+* Although the same command-line syntax is supported, replacing the parser might cause a not integhded breaking change.
+* Node.js 14.8 is required. Although this package should work with Node.js 12 or even Node.js 10 still well, the declaration of exports in package.json is recognised reliably by Node.js 14.8 or newer.
+
 # [4.0.0](https://github.com/prantlf/nettime/compare/v3.0.1...v4.0.0) (2021-12-12)
 
 
@@ -257,6 +275,3 @@
 
 
 # 0.1.0 (2017-10-21)
-
-
-

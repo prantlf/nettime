@@ -1,7 +1,7 @@
 {
   "name": "nettime",
   "description": "Prints timings of a HTTP/S request, including DNS lookup, TLS handshake etc.",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "homepage": "https://github.com/prantlf/nettime",
   "author": {
     "name": "Ferdinand Prantl",
