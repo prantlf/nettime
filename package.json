@@ -73,7 +73,6 @@
     "statements": 100
   },
   "dependencies": {
-    "commander": "9.4.1",
     "readline-sync": "1.4.10",
     "sprintf-js": "1.1.2"
   },

@@ -5,7 +5,6 @@ specifiers:
   '@semantic-release/git': 10.0.1
   '@types/node': 18.11.17
   c8: 7.12.0
-  commander: 9.4.1
   denolint: 2.0.5
   nettime: 'link:'
   readline-sync: 1.4.10
@@ -18,7 +17,6 @@ specifiers:
   typescript: 4.9.4
 
 dependencies:
-  commander: 9.4.1
   readline-sync: 1.4.10
   sprintf-js: 1.1.2
 
@@ -276,11 +274,6 @@ packages:
   /color-name/1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
     dev: true
-
-  /commander/9.4.1:
-    resolution: {integrity: sha512-5EEkTNyHNGFPD2H+c/dXXfQZYa/scCKasxWcXJaWnNJ99pnQN9Vnmqow+p+PlFPE63Q6mThaZws1T+HxfpgtPw==}
-    engines: {node: ^12.20.0 || >=14}
-    dev: false
 
   /concat-map/0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}

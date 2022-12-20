@@ -1,59 +1,156 @@
 #!/usr/bin/env node
 
-const commander = require('commander')
 const { nettime, isRedirect } = require('../lib/nettime.cjs')
-const { version, description } = require('../package.json')
 const {
   computeAverageDurations, createTimingsFromDurations
 } = require('../lib/timings.cjs')
 const { printTimings } = require('../lib/printer.cjs')
 const readlineSync = require('readline-sync')
 
-commander
-  .version(version)
-  .description(description)
-  .usage('[options] <URL>')
-  .option('-0, --http1.0', 'use HTTP 1.0')
-  .option('--http1.1', 'use HTTP 1.1 (default)')
-  .option('--http2', 'use HTTP 2')
-  .option('-c, --connect-timeout <ms>', 'maximum time to wait for a connection', totInteger)
-  .option('-d, --data <data>', 'data to be sent using the POST verb')
-  .option('-f, --format <format>', 'set output format: text, json, raw')
-  .option('-H, --header <header>', 'send specific HTTP header', collect, [])
-  .option('-i, --include', 'include response headers in the output')
-  .option('-I, --head', 'use HEAD verb to get document info only')
-  .option('-k, --insecure', 'ignore certificate errors')
-  .option('-L, --location', 'follow redirects')
-  .option('-o, --output <file>', 'write the received data to a file')
-  .option('-t, --time-unit <unit>', 'set time unit: ms, s+ns')
-  .option('-u, --user <credentials>', 'credentials for Basic Authentication')
-  .option('-X, --request <verb>', 'specify HTTP verb to use for the request')
-  .option('-C, --request-count <count>', 'count of requests to make', totInteger, 1)
-  .option('-D, --request-delay <ms>', 'delay between two requests', totInteger, 100)
-  .option('-A, --average-timings', 'print an average of multiple request timings')
-  .on('--help', () => {
-    console.log()
-    console.log('  The default output format is "text" and time unit "ms". Other options')
-    console.log('  are compatible with curl. Timings are printed to the standard output.')
-    console.log()
-    console.log('  Examples:')
-    console.log()
-    console.log('    $ nettime https://www.github.com')
-    console.log('    $ nettime -f json https://www.gitlab.com')
-    console.log('    $ nettime --http2 -C 3 -A https://www.google.com')
-  })
-  .parse(process.argv)
+function help() {
+  console.log(`${require('../package.json').description}
 
-const url = commander.args[0]
-if (!url) {
-  commander.help()
+Usage: nettime [options] <URL>
+
+Options:
+  -0|--http1.0                use HTTP 1.0
+  --http1.1                   use HTTP 1.1 (default)
+  --http2                     use HTTP 2
+  -c|--connect-timeout <ms>   maximum time to wait for a connection
+  -d|--data <data>            data to be sent using the POST verb
+  -f|--format <format>        set output format: text, json, raw
+  -H|--header <header>        send specific HTTP header
+  -i|--include                include response headers in the output
+  -I|--head                   use HEAD verb to get document info only
+  -k|--insecure               ignore certificate errors
+  -L|--location               follow redirects
+  -o|--output <file>          write the received data to a file
+  -t|--time-unit <unit>       set time unit: ms, s+ns (default: ms)
+  -u|--user <credentials>     credentials for Basic Authentication
+  -X|--request <verb>         specify HTTP verb to use for the request
+  -C|--request-count <count>  count of requests to make (default: 1)
+  -D|--request-delay <ms>     delay between two requests (default: 100ms)
+  -A|--average-timings        print an average of multiple request timings
+  -V|--version                print version number
+  -h|--help                   print usage instructions
+
+  The default output format is "text" and time unit "ms". Other options
+  are compatible with curl. Timings are printed to the standard output.
+
+Examples:')
+  $ nettime https://www.github.com
+  $ nettime -f json https://www.gitlab.com
+  $ nettime --http2 -C 3 -A https://www.google.com`)
 }
 
-const options = commander.opts()
-const timeUnit = options.timeUnit || 'ms'
-if (['ms', 's+ns'].indexOf(timeUnit) < 0) {
-  console.error(`Invalid time unit: "${timeUnit}". Valid values are "ms", and "s+ns".`)
-  process.exit(1)
+function toInteger(text, name) {
+  const number = +text
+  if (typeof number !== 'number') {
+    console.error(`${name} has to be a number.`)
+    process.exit(1)
+  }
+  return number
+}
+
+function toEnum(value, values, name) {
+  if (values.indexOf(value) < 0) {
+    console.error(`Invalid ${name}: "${value}". Valid values are "${values.join('", "')}".`)
+    process.exit(1)
+  }
+  return value
+}
+
+const { argv } = process
+const header = []
+let   url, timeUnit, format = 'text', user, http2, http1_0, timeout, data,
+      head, includeHeaders, insecure, outputFile, request, followRedirects,
+      requestCount = 1, requestDelay = 100, averageTimings
+
+for (let i = 2, l = argv.length; i < l; ++i) {
+  const arg = argv[i]
+  const match = /^(-|--)(no-)?([a-zA-Z0][-a-zA-Z0-2.]*)(?:=(.*))?$/.exec(arg)
+  if (match) {
+    const parseArg = (arg, flag) => {
+      switch (arg) {
+        case '0': case 'http1.0':
+          http1_0 = flag
+          return
+        case 'http1.1':
+          http1_0 = !flag
+          return
+        case 'http2':
+          http2 = flag
+          return
+        case 'c': case 'connect-timeout':
+          timeout = toInteger(match[4] || argv[++i], 'Timeout')
+          return
+        case 'd': case 'data':
+          data = match[4] || argv[++i]
+          return
+        case 'f': case 'format':
+          format = toEnum(match[4] || argv[++i], ['json', 'raw', 'text'], 'format')
+          return
+        case 'H': case 'header':
+          header.push(match[4] || argv[++i])
+          return
+        case 'i': case 'include':
+          includeHeaders = flag
+          return
+        case 'I': case 'head':
+          head = flag
+          return
+        case 'k': case 'insecure':
+          insecure = flag
+          return
+        case 'L': case 'location':
+          followRedirects = flag
+          return
+        case 'o': case 'output':
+          outputFile = match[4] || argv[++i]
+          return
+        case 't': case 'time-unit':
+          timeUnit = toEnum(match[4] || argv[++i], ['ms', 's+ns'], 'time unit')
+          return
+        case 'u': case 'user':
+          user = match[4] || argv[++i]
+          return
+        case 'X': case 'request':
+          request = match[4] || argv[++i]
+          return
+        case 'C': case 'request-count':
+          requestCount = toInteger(match[4] || argv[++i], 'Request count')
+          return
+        case 'D': case 'request-delay':
+          requestDelay = toInteger(match[4] || argv[++i], 'Request delay')
+          return
+        case 'A': case 'average-timings':
+          averageTimings = flag
+          return
+        case 'V': case 'version':
+          console.log(require('../package.json').version)
+          process.exit(0)
+          return
+        case 'h': case 'help':
+          help()
+          process.exit(0)
+      }
+      console.error(`unknown option: "${arg}"`)
+      process.exit(1)
+    }
+    if (match[1] === '-') {
+      const flags = match[3].split('')
+      for (const flag of flags) parseArg(flag, true)
+    } else {
+      parseArg(match[3], match[2] !== 'no-')
+    }
+    continue
+  }
+  url = arg
+}
+
+if (!url) {
+  help()
+  process.exit(0)
 }
 
 const formatters = {
@@ -68,15 +165,9 @@ const formatters = {
     printTimings(timings, timeUnit) +
     `\nResponse: HTTP/${httpVersion} ${statusCode} ${statusMessage}`
 }
-
-const format = options.format || 'text'
 const formatter = formatters[format]
-if (!formatter) {
-  console.error(`Invalid format: "${format}". Valid formats are "text", "json" and "raw".`)
-  process.exit(1)
-}
 
-const headers = options.header.reduce((result, header) => {
+const headers = header.reduce((result, header) => {
   const colon = header.indexOf(':')
   if (colon > 0) {
     const name = header
@@ -91,7 +182,7 @@ const headers = options.header.reduce((result, header) => {
   return result
 }, {})
 
-let credentials = options.user
+let credentials = user
 if (credentials) {
   const colon = credentials.indexOf(':')
   let username, password
@@ -105,12 +196,7 @@ if (credentials) {
   credentials = { username, password }
 }
 
-const {
-  connectTimeout: timeout, data, head, include: includeHeaders, insecure,
-  output: outputFile, request, requestCount, requestDelay, averageTimings,
-  location: followRedirects
-} = options
-const httpVersion = options.http2 ? '2.0' : options['http1.0'] ? '1.0' : '1.1'
+const httpVersion = http2 ? '2.0' : http1_0 ? '1.0' : '1.1'
 const method = request || (head ? 'HEAD' : data ? 'POST' : 'GET')
 const failOnOutputFileError = false
 const rejectUnauthorized = !insecure
@@ -160,15 +246,6 @@ nettime({
     console.error(message)
     process.exitCode = 1
   })
-
-function collect (value, result) {
-  result.push(value)
-  return result
-}
-
-function totInteger (value) {
-  return parseInt(value)
-}
 
 function convertToMilliseconds (timings) {
   const getMilliseconds = nettime.getMilliseconds

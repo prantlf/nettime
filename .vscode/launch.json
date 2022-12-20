@@ -5,8 +5,9 @@
       "type": "node",
       "request": "launch",
       "name": "bin",
-      "program": "${workspaceRoot}/bin/nettime",
+      "program": "${workspaceRoot}/bin/nettime.cjs",
       "args": [
+        "-i",
         "https://www.google.com"
       ]
     },
