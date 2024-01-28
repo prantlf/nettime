@@ -44,6 +44,6 @@ declare interface NettimeTimings {
 
 export default function nettime(options: string | NettimeOptions): Promise<NettimeResponse>
 export function nettime(options: string | NettimeOptions): Promise<NettimeResponse>
-export function getDuration (start: number, end: number): number
+export function getDuration (start: number[], end: number[]): number[]
 export function getMilliseconds (timings: number[]): number
 export function isRedirect (statusCode: number): boolean
